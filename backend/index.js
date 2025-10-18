@@ -41,7 +41,7 @@ app.get("/users", async (req, res) => {
 // GET user by id
 app.get("/users/:id", async (req, res) => {
   try {
-    const { rows } = await db.query("SELECT * FROM users WHERE user_id = $1", [req.params.id]);
+    const { rows } = await db.query("SELECT * FROM users WHERE userID = $1", [req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: "User not found" });
     res.json(rows[0]);
   } catch (err) {
@@ -54,7 +54,7 @@ app.post("/users", async (req, res) => {
   const { first_name, last_name, email, password, role } = req.body;
   try {
     const result = await db.query(
-      "INSERT INTO users (first_name, last_name, email, password, role) VALUES ($1,$2,$3,$4,$5) RETURNING *",
+      "INSERT INTO users (firstName, lastName, email, password, role) VALUES ($1,$2,$3,$4,$5) RETURNING *",
       [first_name, last_name, email, password, role]
     );
     res.status(201).json(result.rows[0]);
@@ -68,7 +68,7 @@ app.put("/users/:id", async (req, res) => {
   const { first_name, last_name, email, password, role } = req.body;
   try {
     const result = await db.query(
-      "UPDATE users SET first_name=$1, last_name=$2, email=$3, password=$4, role=$5 WHERE user_id=$6 RETURNING *",
+      "UPDATE users SET firstName=$1, lastName=$2, email=$3, password=$4, role=$5 WHERE userID=$6 RETURNING *",
       [first_name, last_name, email, password, role, req.params.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: "User not found" });
@@ -81,7 +81,7 @@ app.put("/users/:id", async (req, res) => {
 // DELETE user
 app.delete("/users/:id", async (req, res) => {
   try {
-    const result = await db.query("DELETE FROM users WHERE user_id=$1 RETURNING *", [req.params.id]);
+    const result = await db.query("DELETE FROM users WHERE userID=$1 RETURNING *", [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: "User not found" });
     res.json({ message: "User deleted successfully" });
   } catch (err) {
