@@ -2,16 +2,17 @@ version: "3.8"
 
 services:
   db:
-    image: mysql:8.0
+    image: postgres:15
     container_name: CheckyDB
     ports:
-      - "${DB_PORT}:3306"
+      - "${DB_PORT}:5432"
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASS} 
-      MYSQL_DATABASE: ${DB_NAME}      
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}   
     volumes:
       - ./database:/docker-entrypoint-initdb.d
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/postgresql/data
     env_file:
       - ./.env
 

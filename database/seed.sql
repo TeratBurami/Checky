@@ -1,4 +1,6 @@
-USE checkydb;
+-- ------------------------------
+-- PostgreSQL Seed Data for Checky
+-- ------------------------------
 
 -- Users
 INSERT INTO users (first_name, last_name, email, password, role) VALUES
