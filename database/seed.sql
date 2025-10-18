@@ -1,9 +1,10 @@
-USE checkydb;
+-- ------------------------------
+-- PostgreSQL Seed Data for Checky
+-- ------------------------------
 
-INSERT INTO users (name, email, password) VALUES
-('Alice', 'alice@example.com', 'pass1'),
-('Bob', 'bob@example.com', 'pass2');
-
-INSERT INTO posts (user_id, title, content) VALUES
-(1, 'Hello World', 'This is Alice''s first post.'),
-(2, 'My Post', 'This is Bob''s first post.');
+-- Users
+INSERT INTO users (firstName, lastName, email, password, role) VALUES
+('John', 'Doe', 'john.doe@example.com', 'hashedpassword1', 'student'),
+('Jane', 'Doe', 'jane.smith@example.com', 'hashedpassword2', 'student'),
+('Alan', 'Turing', 'alan.turing@example.com', 'hashedpassword3', 'teacher'),
+('Grace', 'Hopper', 'grace.hopper@example.com', 'hashedpassword4', 'teacher');
