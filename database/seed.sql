@@ -8,3 +8,10 @@ INSERT INTO users (firstName, lastName, email, password, role) VALUES
 ('Jane', 'Doe', 'jane.smith@example.com', 'hashedpassword2', 'student'),
 ('Alan', 'Turing', 'alan.turing@example.com', 'hashedpassword3', 'teacher'),
 ('Grace', 'Hopper', 'grace.hopper@example.com', 'hashedpassword4', 'teacher');
+
+-- Classes
+INSERT INTO classes (name, description, classCode, teacherID) VALUES
+('Introduction to Literature', 'Exploration of literary themes, genres, and critical approaches', 'LIT101', 3),
+('Advanced Academic Writing', 'Deep dive into academic writing and research methodologies', 'ENG201', 3),
+('Historical Investigation Fundamentals', 'Introduction to historical research methods and sources', 'HIS101', 4),
+('Religious Studies 101', 'Introduction to major world religions and their impacts on society', 'REL101', 4);
