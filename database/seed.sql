@@ -15,3 +15,10 @@ INSERT INTO classes (name, description, classCode, teacherID) VALUES
 ('Advanced Academic Writing', 'Deep dive into academic writing and research methodologies', 'ENG201', 3),
 ('Historical Investigation Fundamentals', 'Introduction to historical research methods and sources', 'HIS101', 4),
 ('Religious Studies 101', 'Introduction to major world religions and their impacts on society', 'REL101', 4);
+
+-- Class Members
+INSERT INTO classMembers (classID, studentID) VALUES
+(1, 1),
+(1, 2),
+(2, 1),
+(3, 2);
