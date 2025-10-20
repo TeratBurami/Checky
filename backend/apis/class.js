@@ -24,15 +24,42 @@ router.get("/", async (req, res) => {
 });
 
 // POST create a new class (stuck at non-null constraint error from db)
-// router.post("/", async (req, res) => {
-//   const { name, description } = req.body;
-//   try {
-//     const { rows } = await db.query("INSERT INTO classes (name, description) VALUES ($1, $2)", [name, description]);
-//     res.sendStatus(201);
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// });
+router.post("/", async (req, res) => {
+    const { name, description } = req.body;
+
+    try {
+        const token = req.cookies.token;
+        if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const teacherID = decoded.userid;
+
+        const { rows: teacherRows } = await db.query(
+            "SELECT firstName, lastName FROM users WHERE userID=$1 AND role='teacher'",
+            [teacherID]
+        );
+
+        if (teacherRows.length === 0)
+            return res.status(404).json({ error: "Teacher not found" });
+
+        const teacher = teacherRows[0];
+        const classCode = await genUniqueClassCode(
+            db,
+            name,
+            teacher.firstname,
+            teacher.lastname
+        );
+
+        const { rows } = await db.query(
+            "INSERT INTO classes (name, description, classCode, teacherID) VALUES ($1, $2, $3, $4) RETURNING *",
+            [name, description, classCode, teacherID]
+        );
+
+        res.status(201).json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // PUT update class info
 router.put("/:classId", async (req, res) => {
@@ -130,7 +157,6 @@ router.post("/join", async (req, res) => {
     try {
         const token = req.cookies.token;
         console.log("Token:", token);
-        // printf("Token:", token);
         if (!token) return res.status(401).json({ error: "Unauthorized" });
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -188,7 +214,6 @@ router.post("/:classId/invitations", async (req, res) => {
 
         const studentId = userResult.rows[0].userid;
 
-        // check if the student is already a member of the class
         const memberCheck = await db.query(
             `SELECT * FROM classMembers WHERE classID = $1 AND studentID = $2`,
             [classId, studentId]
@@ -198,7 +223,6 @@ router.post("/:classId/invitations", async (req, res) => {
             return res.status(400).json({ error: "Student is already a member of this class" });
         }
 
-        // add the student to the class
         await db.query(
             `INSERT INTO classMembers (classID, studentID) VALUES ($1, $2)`,
             [classId, studentId]
@@ -209,5 +233,19 @@ router.post("/:classId/invitations", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+async function genUniqueClassCode(db, name, teacherFirst, teacherLast) {
+    const namePrefix = (name?.trim().substring(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, '')) || 'CLS';
+    const teacherPrefix =
+        ((teacherFirst?.[0] || '').toUpperCase() + (teacherLast?.[0] || '').toUpperCase()) || 'XX';
+    let code, exists;
+    do {
+        const randomPart = Math.random().toString(36).substring(2, 5).toUpperCase();
+        code = `${namePrefix}${teacherPrefix}${randomPart}`;
+        const { rowCount } = await db.query("SELECT 1 FROM classes WHERE classCode=$1", [code]);
+        exists = rowCount > 0;
+    } while (exists);
+    return code;
+}
 
 export default router;
