@@ -118,4 +118,41 @@ router.get("/:classId/assignment", async (req, res) => {
   }
 });
 
+router.put("/:classId/:assignmentId", async (req, res) => {
+  const { classId, assignmentId } = req.params;
+  const { title, description, deadline, rubricId } = req.body;
+  try {
+    const result = await db.query(
+      `UPDATE assignments
+        SET title=$1, description=$2, deadline=$3, rubric_id=$4
+        WHERE assignment_id=$5 AND class_id=$6
+        RETURNING assignment_id AS "assignmentId", title, description, deadline, rubric_id AS "rubricId"`,
+      [title, description, deadline, rubricId, assignmentId, classId]
+    );
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Assignment not found" });
+    res.json({ assignment: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE an assignment
+router.delete("/:classId/:assignmentId", async (req, res) => {
+  const { classId, assignmentId } = req.params;
+  try {
+    const result = await db.query(
+      `DELETE FROM assignments
+        WHERE assignment_id=$1 AND class_id=$2
+        RETURNING assignment_id AS "assignmentId"`,
+      [assignmentId, classId]
+    );
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Assignment not found" });
+    res.json({ message: "Assignment deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

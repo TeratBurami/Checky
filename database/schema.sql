@@ -72,11 +72,11 @@ CREATE TABLE assignments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- -- Submissions
+-- Submissions
 -- CREATE TABLE submissions (
 --     submission_id SERIAL PRIMARY KEY,
 --     assignment_id INT NOT NULL REFERENCES assignments(assignment_id) ON DELETE CASCADE,
---     student_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+--     student_id INT NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
 --     content TEXT,
 --     attachments JSON,
 --     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
