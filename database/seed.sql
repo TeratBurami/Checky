@@ -66,4 +66,14 @@ INSERT INTO assignments (class_id, title, description, deadline, rubric_id) VALU
 (3, 'Historical Sources Review', 'Analyze three primary sources from the 18th century.', '2025-10-30 23:59:59', 2),
 (4, 'Religion Reflection Paper', 'Reflect on a major world religion and its social impact.', '2025-11-05 23:59:59', 2);
 
+-- Notifications
+INSERT INTO notifications (user_id, type, message, link, is_read, created_at) VALUES
+(1, 'NEW_ASSIGNMENT', 'A new assignment "Lab 1: Linked Lists" has been posted in Data Structures & Algorithms.', '/class/1/assignments/1', FALSE, NOW() - INTERVAL '3 days'),
+(2, 'PEER_REVIEW_ASSIGNED', 'You have been assigned to review a peer submission for "Lab 1: Linked Lists".', '/class/1/assignments/1/review', FALSE, NOW() - INTERVAL '2 days'),
+(3, 'NEW_COMMENT', 'Your instructor commented on your submission for "Lab 1: Linked Lists".', '/class/1/assignments/1/submission', TRUE, NOW() - INTERVAL '1 day'),
+(1, 'GRADE_RELEASED', 'Grades have been released for "Lab 1: Linked Lists". Check your score now.', '/class/1/assignments/1/grade', TRUE, NOW() - INTERVAL '12 hours'),
+(4, 'NEW_ASSIGNMENT', 'A new assignment "Midterm Project Proposal" has been posted in Data Structures & Algorithms.', '/class/1/assignments/3', FALSE, NOW() - INTERVAL '6 hours'),
+(5, 'PEER_REVIEW_ASSIGNED', 'You have been assigned to review a submission for "Midterm Project Proposal".', '/class/1/assignments/3/review', FALSE, NOW() - INTERVAL '2 hours'),
+(2, 'NEW_COMMENT', 'A classmate replied to your comment in "Lab 2: Binary Search Trees".', '/class/1/discussions/2', FALSE, NOW() - INTERVAL '1 hour'),
+(3, 'GRADE_RELEASED', 'Your grade for "Lab 2: Binary Search Trees" is now available.', '/class/1/assignments/2/grade', FALSE, NOW() - INTERVAL '30 minutes');
 
