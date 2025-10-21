@@ -99,7 +99,7 @@ CREATE TABLE assignments (
 -- Notifications
 CREATE TABLE notifications (
     notification_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
     type notification_type NOT NULL,
     message TEXT NOT NULL,
     link VARCHAR(255),
