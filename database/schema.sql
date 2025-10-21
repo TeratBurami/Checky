@@ -37,40 +37,40 @@ CREATE TABLE classMembers (
     PRIMARY KEY (classID, studentID)
 );
 
--- -- Rubrics
--- CREATE TABLE rubrics (
---     rubric_id SERIAL PRIMARY KEY,
---     name VARCHAR(255) NOT NULL,
---     teacher_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
--- );
+-- Rubrics
+CREATE TABLE rubrics (
+    rubric_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    teacherID INT NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
--- -- Rubric Criteria
--- CREATE TABLE rubric_criteria (
---     criterion_id SERIAL PRIMARY KEY,
---     rubric_id INT NOT NULL REFERENCES rubrics(rubric_id) ON DELETE CASCADE,
---     title VARCHAR(255) NOT NULL
--- );
+-- Rubric Criteria
+CREATE TABLE rubric_criteria (
+    criterion_id SERIAL PRIMARY KEY,
+    rubric_id INT NOT NULL REFERENCES rubrics(rubric_id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL
+);
 
--- -- Rubric Levels
--- CREATE TABLE rubric_levels (
---     level_id SERIAL PRIMARY KEY,
---     criterion_id INT NOT NULL REFERENCES rubric_criteria(criterion_id) ON DELETE CASCADE,
---     level_name level_name NOT NULL,
---     score INT NOT NULL,
---     description TEXT
--- );
+-- Rubric Levels
+CREATE TABLE rubric_levels (
+    level_id SERIAL PRIMARY KEY,
+    criterion_id INT NOT NULL REFERENCES rubric_criteria(criterion_id) ON DELETE CASCADE,
+    level_name level_name NOT NULL,
+    score INT NOT NULL,
+    description TEXT
+);
 
--- -- Assignments
--- CREATE TABLE assignments (
---     assignment_id SERIAL PRIMARY KEY,
---     class_id INT NOT NULL REFERENCES classes(class_id) ON DELETE CASCADE,
---     title VARCHAR(255) NOT NULL,
---     description TEXT,
---     deadline TIMESTAMP,
---     rubric_id INT REFERENCES rubrics(rubric_id) ON DELETE SET NULL,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
--- );
+-- Assignments
+CREATE TABLE assignments (
+    assignment_id SERIAL PRIMARY KEY,
+    class_id INT NOT NULL REFERENCES classes(classID) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    deadline TIMESTAMP,
+    rubric_id INT REFERENCES rubrics(rubric_id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- -- Submissions
 -- CREATE TABLE submissions (
