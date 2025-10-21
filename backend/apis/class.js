@@ -55,7 +55,10 @@ router.post("/", async (req, res) => {
             [name, description, classCode, teacherID]
         );
 
-        res.status(201).json(rows[0]);
+        res.status(201).json({
+            status: res.statusCode,
+            msg: "Class created successfully with id " + rows[0].classid,
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -72,7 +75,10 @@ router.put("/:classId", async (req, res) => {
       `,
             [name, description, classId]
         );
-        res.sendStatus(204);
+        res.status(200).json({
+            status: res.statusCode,
+            msg: "Class updated successfully",
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -86,43 +92,54 @@ router.delete("/:classId", async (req, res) => {
         await db.query(`DELETE FROM classes WHERE classID = $1
       `, [classId]
         );
-        res.sendStatus(204);
+        res.status(200).json({
+            status: res.statusCode,
+            msg: "Class deleted successfully",
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// GET class by ID (still missing assignment list)
+// GET class by ID (with assignment list)
 router.get("/:classId", async (req, res) => {
     const classId = req.params.classId;
     try {
         const { rows } = await db.query(
             `
-      SELECT 
-        c.classID, c.name, c.description, c.classCode, u.userID AS teacher_userId,
-        u.firstName AS teacher_firstName, u.lastName AS teacher_lastName
-        FROM classes c
-        LEFT JOIN users u ON c.teacherID = u.userID
-        WHERE c.classID = $1
-    `,
+            SELECT 
+                c.classID, c.name, c.description, c.classCode,
+                u.userID AS teacher_userId, u.firstName AS teacher_firstName, u.lastName AS teacher_lastName,
+                a.assignment_id, a.title AS assignment_title, a.deadline AS assignment_deadline
+                FROM classes c
+                LEFT JOIN users u ON c.teacherID = u.userID
+                LEFT JOIN assignments a ON c.classID = a.class_id
+                WHERE c.classID = $1
+                ORDER BY a.created_at ASC
+            `,
             [classId]
         );
 
-        if (rows.length === 0) {
-            return res.status(404).json({ error: "Class not found" });
-        }
+        if (rows.length === 0) return res.status(404).json({ error: "Class not found" });
 
-        const c = rows[0];
+        const first = rows[0];
         const result = {
-            classId: c.classid,
-            name: c.name,
-            description: c.description,
-            classCode: c.classcode,
+            classId: first.classid,
+            name: first.name,
+            description: first.description,
+            classCode: first.classcode,
             teacher: {
-                userId: c.teacher_userid,
-                firstName: c.teacher_firstname,
-                lastName: c.teacher_lastname,
+                userId: first.teacher_userid,
+                firstName: first.teacher_firstname,
+                lastName: first.teacher_lastname,
             },
+            assignments: rows
+                .filter(r => r.assignment_id)
+                .map(a => ({
+                    assignmentId: a.assignment_id,
+                    title: a.assignment_title,
+                    deadline: a.assignment_deadline,
+                })),
         };
 
         res.json(result);
@@ -130,6 +147,7 @@ router.get("/:classId", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 
 // GET class members
 router.get("/:classId/members", async (req, res) => {
@@ -195,8 +213,6 @@ router.post("/join", async (req, res) => {
     }
 });
 
-
-
 // POST add student to class with email
 router.post("/:classId/invitations", async (req, res) => {
     const classId = req.params.classId;
@@ -228,7 +244,10 @@ router.post("/:classId/invitations", async (req, res) => {
             [classId, studentId]
         );
 
-        res.sendStatus(201);
+        res.status(201).json({
+            status: res.statusCode,
+            msg: "Student added to class with id " + classId + " successfully",
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
