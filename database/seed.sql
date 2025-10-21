@@ -8,7 +8,8 @@ INSERT INTO users (firstName, lastName, email, password, role) VALUES
 ('Jane', 'Doe', 'jane.smith@example.com', 'hashedpassword2', 'student'),
 ('Alan', 'Turing', 'alan.turing@example.com', 'hashedpassword3', 'teacher'),
 ('Grace', 'Hopper', 'grace.hopper@example.com', 'hashedpassword4', 'teacher'),
-('Sandy', 'Daisy', 'sandy@gmail.com', '$2b$10$ycB8iU66PW0zQgZBpNRHHOba.Afy6KFKtoZa1QA7NG42aIzBQDa0G', 'student');
+('Sandy', 'Daisy', 'sandy@gmail.com', '$2b$10$ycB8iU66PW0zQgZBpNRHHOba.Afy6KFKtoZa1QA7NG42aIzBQDa0G', 'student'),
+('Sandy', 'Daisy', 'daisy@gmail.com', '$2b$10$sWifB9q.XOsEIo4hadHTleUBnzEPbX5BNFHZJvKfjGkdD1TKwy8HS', 'teacher');
 
 -- Classes
 INSERT INTO classes (name, description, classCode, teacherID) VALUES
