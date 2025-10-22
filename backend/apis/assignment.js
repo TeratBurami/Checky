@@ -33,6 +33,37 @@ router.post("/:classId/assignment", async (req, res) => {
       [classId, title, description, deadline, rubricId]
     );
 
+    const assignment = rows[0];
+
+    // Get all students in class
+    const { rows: students } = await db.query(
+      "SELECT studentID FROM classMembers WHERE classID = $1",
+      [classId]
+    );
+
+    // Create notifications
+    if (students.length > 0) {
+      const notifications = students.map((s) => [
+        s.studentid,
+        "NEW_ASSIGNMENT",
+        `New assignment '${title}' has been posted.`,
+        `/class/${classId}/assignments/${assignment.assignmentId}`,
+      ]);
+
+      const values = notifications
+        .map(
+          (_, i) =>
+            `($${i * 4 + 1}, $${i * 4 + 2}::notification_type, $${i * 4 + 3}, $${i * 4 + 4})`
+        )
+        .join(", ");
+
+      const flatValues = notifications.flat();
+      await db.query(
+        `INSERT INTO notifications (user_id, type, message, link) VALUES ${values}`,
+        flatValues
+      );
+    }
+
     res.status(201).json({ assignment: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -113,6 +144,43 @@ router.get("/:classId/assignment", async (req, res) => {
     }
 
     res.json({ assignments: Object.values(assignmentsMap) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put("/:classId/:assignmentId", async (req, res) => {
+  const { classId, assignmentId } = req.params;
+  const { title, description, deadline, rubricId } = req.body;
+  try {
+    const result = await db.query(
+      `UPDATE assignments
+        SET title=$1, description=$2, deadline=$3, rubric_id=$4
+        WHERE assignment_id=$5 AND class_id=$6
+        RETURNING assignment_id AS "assignmentId", title, description, deadline, rubric_id AS "rubricId"`,
+      [title, description, deadline, rubricId, assignmentId, classId]
+    );
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Assignment not found" });
+    res.json({ assignment: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE an assignment
+router.delete("/:classId/:assignmentId", async (req, res) => {
+  const { classId, assignmentId } = req.params;
+  try {
+    const result = await db.query(
+      `DELETE FROM assignments
+        WHERE assignment_id=$1 AND class_id=$2
+        RETURNING assignment_id AS "assignmentId"`,
+      [assignmentId, classId]
+    );
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Assignment not found" });
+    res.json({ message: "Assignment deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
