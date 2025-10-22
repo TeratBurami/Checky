@@ -33,6 +33,37 @@ router.post("/:classId/assignment", async (req, res) => {
       [classId, title, description, deadline, rubricId]
     );
 
+    const assignment = rows[0];
+
+    // Get all students in class
+    const { rows: students } = await db.query(
+      "SELECT studentID FROM classMembers WHERE classID = $1",
+      [classId]
+    );
+
+    // Create notifications
+    if (students.length > 0) {
+      const notifications = students.map((s) => [
+        s.studentid,
+        "NEW_ASSIGNMENT",
+        `New assignment '${title}' has been posted.`,
+        `/class/${classId}/assignments/${assignment.assignmentId}`,
+      ]);
+
+      const values = notifications
+        .map(
+          (_, i) =>
+            `($${i * 4 + 1}, $${i * 4 + 2}::notification_type, $${i * 4 + 3}, $${i * 4 + 4})`
+        )
+        .join(", ");
+
+      const flatValues = notifications.flat();
+      await db.query(
+        `INSERT INTO notifications (user_id, type, message, link) VALUES ${values}`,
+        flatValues
+      );
+    }
+
     res.status(201).json({ assignment: rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
