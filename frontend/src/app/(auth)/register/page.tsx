@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React,{useState} from "react";
 import "@/app/globals.css";
 
 const MailIcon = ({ className = "w-6 h-6" }) => (
@@ -57,11 +57,64 @@ const UserIcon = ({ className = "w-6 h-6" }) => (
 
 export default function Register() {
 
-    const handleSubmit=(event: React.FormEvent<HTMLFormElement>)=> {
-        //call register api here
-        event.preventDefault();
-        window.location.href = "/login";
+    const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("student");
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
     }
+
+
+    try {
+      const response = await fetch("http://localhost:3000/api/v1/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+          role,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.msg || data.message || "Registration failed.");
+      }
+
+      setSuccess("Account created successfully! Redirecting to login...");
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      window.location.href = "/login";
+
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900 font-sans p-4 bg-gradient-to-br from-orange-200 to-orange-700">
@@ -88,6 +141,9 @@ export default function Register() {
                 type="text"
                 placeholder="First Name"
                 className="w-full py-3 pl-10 pr-4 text-orange-100 bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all placeholder-white/60"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                disabled={loading}
                 required
               />
             </div>
@@ -99,6 +155,9 @@ export default function Register() {
                 type="text"
                 placeholder="Last Name"
                 className="w-full py-3 pl-10 pr-4 text-orange-100 bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all placeholder-white/60"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                disabled={loading}
                 required
               />
             </div>
@@ -112,6 +171,9 @@ export default function Register() {
               type="email"
               placeholder="your@email.com"
               className="w-full py-3 pl-10 pr-4 text-orange-100 bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all placeholder-white/60"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
               required
             />
           </div>
@@ -124,6 +186,9 @@ export default function Register() {
               type="password"
               placeholder="Password"
               className="w-full py-3 pl-10 pr-4 text-orange-100 bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all placeholder-white/60"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
               required
             />
           </div>
@@ -136,16 +201,50 @@ export default function Register() {
               type="password"
               placeholder="Confirm Password"
               className="w-full py-3 pl-10 pr-4 text-orange-100 bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all placeholder-white/60"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={loading}
               required
             />
           </div>
 
-          <div className="flex items-center">
+          <div className="text-orange-100 pt-2">
+            <label className="block text-sm font-medium mb-2">I am a:</label>
+            <div className="flex gap-4">
+              <label className="flex items-center space-x-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="student"
+                  checked={role === "student"}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="h-4 w-4 text-orange-600 bg-gray-700 border-gray-600 focus:ring-orange-500"
+                  disabled={loading}
+                />
+                <span>Student</span>
+              </label>
+              <label className="flex items-center space-x-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="teacher"
+                  checked={role === "teacher"}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="h-4 w-4 text-orange-600 bg-gray-700 border-gray-600 focus:ring-orange-500"
+                  disabled={loading}
+                />
+                <span>Teacher</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex items-center pt-2">
             <input
               id="consent"
               name="consent"
               type="checkbox"
               className="h-4 w-4 text-orange-600 bg-gray-700 border-gray-600 rounded focus:ring-orange-500"
+              disabled={loading}
               required
             />
             <label
@@ -162,12 +261,18 @@ export default function Register() {
             </label>
           </div>
 
-          <div>
+          <div className="h-5 text-center text-sm pt-2">
+            {error && <p className="text-red-400">{error}</p>}
+            {success && <p className="text-green-400">{success}</p>}
+          </div>
+
+          <div className="pt-2">
             <button
               type="submit"
-              className="w-full px-4 py-3 font-bold text-white bg-gradient-to-r from-orange-600 to-orange-500 rounded-lg hover:from-orange-700 hover:to-orange-600 focus:outline-none focus:ring-4 focus:ring-purple-300/50 transition-all transform hover:scale-105"
+              className="w-full px-4 py-3 font-bold text-white bg-gradient-to-r from-orange-600 to-orange-500 rounded-lg hover:from-orange-700 hover:to-orange-600 focus:outline-none focus:ring-4 focus:ring-purple-300/50 transition-all transform hover:scale-105 disabled:opacity-50 disabled:scale-100"
+              disabled={loading}
             >
-              Create Account
+              {loading ? "Creating Account..." : "Create Account"}
             </button>
           </div>
         </form>

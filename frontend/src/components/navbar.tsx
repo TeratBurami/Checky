@@ -20,7 +20,7 @@ export default function Navbar({ role }: NavbarProps) {
         <nav className="bg-[#FDFBEF] px-4 top-0 z-0 w-full h-18 fixed shadow shadow-slate-300 flex justify-between items-center">
             <div className="flex gap-8 items-center">
                 <Link href="/">
-                    <img src="logo.png" className="w-10 h-12 mr-10" alt="" />
+                    <img src="/logo.png" className="w-10 h-12 mr-10" alt="" />
                 </Link>
 
                 <Link
@@ -35,18 +35,18 @@ export default function Navbar({ role }: NavbarProps) {
                 <Link
                     href="/class"
                     className={`${baseLinkClass} ${
-                        currentPath === "/class" ? activeLinkClass : inactiveLinkClass
+                        currentPath.startsWith("/class")
+                            ? activeLinkClass : inactiveLinkClass
                     }`}
                 >
                     Classes
                 </Link>
 
-                {/* This conditional logic now works perfectly on server and client */}
                 {userRole === "student" && (
                     <Link
                         href="/peer-review"
                         className={`${baseLinkClass} ${
-                            currentPath === "/peer-review"
+                            currentPath.startsWith("/peer-review")
                                 ? activeLinkClass
                                 : inactiveLinkClass
                         }`}
@@ -59,7 +59,7 @@ export default function Navbar({ role }: NavbarProps) {
                     <Link
                         href="/rubric"
                         className={`${baseLinkClass} ${
-                            currentPath === "/rubric"
+                            currentPath.startsWith("/rubric")
                                 ? activeLinkClass
                                 : inactiveLinkClass
                         }`}

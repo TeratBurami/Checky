@@ -1,78 +1,95 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
-// --- CONFIGURATION ---
-
-const publicRoutes = [
-  '/login',
-  '/register',
-];
-
-// Routes accessible by any logged-in user
-const commonPrivateRoutes = [
-  '/',
-  '/class',
-  '/notification',
-];
-
-// Routes exclusive to a specific role
+const publicRoutes = ['/login', '/register'];
+const commonPrivateRoutes = ['/', '/class', '/notification'];
 const roleSpecificRoutes = {
-  student: [
-    '/peer-review',
-  ],
-  teacher: [
-    '/rubric',
-  ],
+  student: ['/peer-review'],
+  teacher: ['/rubric','/class/create'],
 };
 
+interface JwtPayload {
+  userid: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'student' | 'teacher';
+  iat: number;
+  exp: number;
+}
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const userRole = request.cookies.get('role')?.value as 'student' | 'teacher' | undefined;
-  const isLoggedIn = !!userRole;
+  
+  const token = request.cookies.get('token')?.value;
+  
+  let userRole: 'student' | 'teacher' | undefined;
+  let isLoggedIn = false;
+  let tokenIsInvalid = false;
 
-  // --- Redirect logged-in users from public pages ---
+  if (token) {
+    try {
+      if (!process.env.JWT_SECRET) {
+        throw new Error('JWT_SECRET is not defined in .env.local');
+      }
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+      const { payload } = await jwtVerify<JwtPayload>(token, secret);
+
+      userRole = payload.role;
+      isLoggedIn = true;
+
+    } catch (e: any) {
+      console.warn('Invalid token:', e.message);
+      tokenIsInvalid = true;
+      isLoggedIn = false;
+    }
+  }
+  
   const isPublicRoute = publicRoutes.includes(pathname);
+
+  let response = NextResponse.next();
+
   if (isLoggedIn && isPublicRoute) {
-    return NextResponse.redirect(new URL('/', request.url));
+    response = NextResponse.redirect(new URL('/', request.url));
   }
 
-  // --- Protect routes and enforce role-based access ---
   if (!isPublicRoute) {
-    // Redirect if not logged in
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      response = NextResponse.redirect(new URL('/login', request.url));
+    } else {
+      const isCommonRoute = commonPrivateRoutes.some((route) => {
+        if (route === '/') return pathname === route;
+        return pathname.startsWith(route);
+      });
+
+      if (isCommonRoute) {
+        response = NextResponse.next();
+      } else {
+        const allowedSpecificRoutes = roleSpecificRoutes[userRole!] || []; 
+        const isAllowedSpecific = allowedSpecificRoutes.some((route) =>
+          pathname.startsWith(route)
+        );
+
+        if (isAllowedSpecific) {
+          response = NextResponse.next();
+        } else {
+          response = NextResponse.redirect(new URL('/', request.url));
+        }
+      }
     }
-
-    // --- NEW, MORE EXPLICIT AUTHORIZATION LOGIC ---
-
-    // 1. Check if the route is a common private route
-    const isCommonRoute = commonPrivateRoutes.some((route) => {
-      if (route === '/') return pathname === route;
-      return pathname.startsWith(route);
-    });
-
-    if (isCommonRoute) {
-      return NextResponse.next(); // Access granted
-    }
-
-    // 2. If not common, check if it's a route specific to the user's role
-    const allowedSpecificRoutes = roleSpecificRoutes[userRole] || [];
-    const isAllowedSpecific = allowedSpecificRoutes.some((route) => pathname.startsWith(route));
-
-    if (isAllowedSpecific) {
-      return NextResponse.next(); // Access granted
-    }
-    
-    // 3. If it's not a common route or an allowed specific route, deny access
-    return NextResponse.redirect(new URL('/', request.url));
   }
 
-  return NextResponse.next();
+  if (tokenIsInvalid) {
+    if (pathname !== '/login' && pathname !== '/register') {
+         response = NextResponse.redirect(new URL('/login', request.url));
+    }
+    response.cookies.delete('token');
+  }
+
+  return response;
 }
 
 export const config = {
-  // Updated matcher to exclude static files like images
   matcher: '/((?!api|_next/static|_next/image|.*\\.(?:png|jpg|jpeg|gif|ico)$).*)',
 };
-
