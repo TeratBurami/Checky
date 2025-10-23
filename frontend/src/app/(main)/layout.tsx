@@ -1,20 +1,25 @@
-import Navbar from "@/components/navbar";
-import Sidebar from "@/components/sidebar";
+'use client';
 
-const role = localStorage.getItem("role");
+import Navbar from "@/components/navbar";
+import Cookies from "js-cookie";
+import { useEffect, useState } from "react";
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [role, setRole] = useState<string | undefined>();
+
+  useEffect(() => {
+    const userRole = Cookies.get("role");
+    setRole(userRole);
+  }, []);
+
   return (
-    <div className="flex">
-      <Sidebar role={`${role}`} />
-      <main className="flex-1">
-        <Navbar />
-        {children}
-      </main>
+    <div>
+        <Navbar role={role} />
+        <div className="mt-20">{children}</div>
     </div>
   );
 }
