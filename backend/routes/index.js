@@ -14,9 +14,9 @@ router.use("/auth", usersApi);
 router.use("/class", classesApi);
 router.use("/class", assignmentApi);
 router.use("/class", peerReviewsApi);
+router.use("/class", submissionsApi);
 router.use("/rubric", rubricApi);
 router.use("/notifications", notificationApi);
-router.use("/submissions", submissionsApi);
 router.use("/dashboard", dashboardApi);
 
 export default router;

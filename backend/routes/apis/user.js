@@ -2,6 +2,7 @@ import { Router } from "express";
 import db from "../../config/db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { authenticateJWT } from "../../middleware/auth.js";
 
 const router = Router();
 
@@ -84,14 +85,25 @@ router.get("/:id", async (req, res) => {
 });
 
 // UPDATE user
-router.put("/:id", async (req, res) => {
-  const { fisrtName, lastName, email, password, role } = req.body;
+router.put("/:id", authenticateJWT(["student", "teacher"]), async (req, res) => {
+  const { firstName, lastName, email, password } = req.body;
+  const userId = parseInt(req.params.id);
+  console.log(req.user);
+  if (req.user.userid !== userId) {
+    return res.status(403).json({ error: "Forbidden: can only update your own account" });
+  }
+
   try {
     const result = await db.query(
-      "UPDATE users SET firstName=$1, lastName=$2, email=$3, password=$4, role=$5 WHERE userID=$6 RETURNING *",
-      [fisrtName, lastName, email, password, role, req.params.id]
+      `UPDATE users
+       SET firstName=$1, lastName=$2, email=$3, password=$4
+       WHERE userID=$5
+       RETURNING *`,
+      [firstName, lastName, email, password, userId]
     );
+
     if (result.rows.length === 0) return res.status(404).json({ error: "User not found" });
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
