@@ -73,28 +73,35 @@ CREATE TABLE assignments (
 );
 
 -- Submissions
--- CREATE TABLE submissions (
---     submission_id SERIAL PRIMARY KEY,
---     assignment_id INT NOT NULL REFERENCES assignments(assignment_id) ON DELETE CASCADE,
---     student_id INT NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
---     content TEXT,
---     attachments JSON,
---     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     score INT DEFAULT NULL,
---     teacher_comment TEXT,
---     UNIQUE (assignment_id, student_id)
--- );
+CREATE TABLE submissions (
+    submission_id SERIAL PRIMARY KEY,
+    assignment_id INT NOT NULL REFERENCES assignments(assignment_id) ON DELETE CASCADE,
+    student_id INT NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
+    content TEXT,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    score INT DEFAULT NULL,
+    teacher_comment TEXT,
+    UNIQUE (assignment_id, student_id)
+);
 
--- -- Peer Reviews
--- CREATE TABLE peer_reviews (
---     review_id SERIAL PRIMARY KEY,
---     submission_id INT NOT NULL REFERENCES submissions(submission_id) ON DELETE CASCADE,
---     reviewer_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
---     comments TEXT DEFAULT NULL,
---     status review_status DEFAULT 'PENDING',
---     review_deadline TIMESTAMP,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
--- );
+CREATE TABLE submission_files (
+    file_id SERIAL PRIMARY KEY,
+    submission_id INT NOT NULL REFERENCES submissions(submission_id) ON DELETE CASCADE,
+    filename VARCHAR(255) NOT NULL,
+    url VARCHAR(255) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Peer Reviews
+CREATE TABLE peer_reviews (
+    review_id SERIAL PRIMARY KEY,
+    submission_id INT NOT NULL REFERENCES submissions(submission_id) ON DELETE CASCADE,
+    reviewer_id INT NOT NULL REFERENCES users(userID) ON DELETE CASCADE,
+    comments TEXT DEFAULT NULL,
+    status review_status DEFAULT 'PENDING',
+    review_deadline TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Notifications
 CREATE TABLE notifications (
