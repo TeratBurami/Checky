@@ -62,7 +62,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
 // GET all users
 router.get("/", async (req, res) => {
   try {

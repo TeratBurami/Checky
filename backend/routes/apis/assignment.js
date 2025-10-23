@@ -1,6 +1,5 @@
 import { Router } from "express";
 import db from "../../config/db.js";
-import jwt from "jsonwebtoken";
 import { authenticateJWT } from "../../middleware/auth.js";
 
 const router = Router();
@@ -185,6 +184,117 @@ router.delete("/:classId/:assignmentId", authenticateJWT(['teacher']), async (re
       return res.status(403).json({ error: "Forbidden: you do not teach this class or assignment not found" });
 
     res.json({ message: "Assignment deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET assignment detail (role-based)
+router.get("/:classId/:assignmentId", authenticateJWT(['student', 'teacher']), async (req, res) => {
+  const { classId, assignmentId } = req.params;
+  const { role, userid } = req.user;
+
+  try {
+    // 1. Base assignment info
+    const { rows: assignmentRows } = await db.query(
+      `SELECT a.assignment_id AS "assignmentId",
+              a.title, a.description, a.deadline, a.rubric_id AS "rubricId"
+       FROM assignments a
+       WHERE a.assignment_id = $1 AND a.class_id = $2`,
+      [assignmentId, classId]
+    );
+    if (assignmentRows.length === 0)
+      return res.status(404).json({ error: "Assignment not found" });
+
+    const assignment = assignmentRows[0];
+
+    // ---------- STUDENT ----------
+    if (role === 'student') {
+      // Rubric info with criteria + levels
+      const rubricRes = await db.query(
+        `SELECT r.rubric_id AS "rubricId", r.name,
+          json_agg(
+            json_build_object(
+              'title', c.title,
+              'levels', (
+                SELECT json_agg(json_build_object(
+                  'level', l.level_name,
+                  'score', l.score,
+                  'description', l.description
+                ))
+                FROM rubric_levels l
+                WHERE l.criterion_id = c.criterion_id
+              )
+            )
+          ) AS criteria
+         FROM rubrics r
+         JOIN rubric_criteria c ON c.rubric_id = r.rubric_id
+         WHERE r.rubric_id = $1
+         GROUP BY r.rubric_id, r.name`,
+        [assignment.rubricId]
+      );
+
+      const rubric = rubricRes.rows[0] || null;
+
+      // Student submission
+      const submissionRes = await db.query(
+        `SELECT s.submission_id AS "submissionId",
+                s.content,
+                COALESCE(json_agg(json_build_object('filename', f.filename, 'url', f.url))
+                  FILTER (WHERE f.file_id IS NOT NULL), '[]'::json) AS "attachment",
+                s.submitted_at AS "submittedAt",
+                s.score,
+                s.teacher_comment AS "teacherComment",
+                COALESCE(
+                  json_agg(
+                    json_build_object(
+                      'reviewerName', concat(u.firstname, ' ', u.lastname),
+                      'comment', pr.comments
+                    )
+                  ) FILTER (WHERE pr.review_id IS NOT NULL),
+                  '[]'::json
+                ) AS "peerReviewsReceived"
+         FROM submissions s
+         LEFT JOIN submission_files f ON f.submission_id = s.submission_id
+         LEFT JOIN peer_reviews pr ON s.submission_id = pr.submission_id
+         LEFT JOIN users u ON pr.reviewer_id = u.userid
+         WHERE s.assignment_id = $1 AND s.student_id = $2
+         GROUP BY s.submission_id`,
+        [assignmentId, userid]
+      );
+
+      assignment.rubric = rubric;
+      assignment.mySubmission = submissionRes.rows[0] || null;
+      return res.json(assignment);
+    }
+
+    // ---------- TEACHER ----------
+    if (role === 'teacher') {
+      const submissionsRes = await db.query(
+        `SELECT s.submission_id AS "submissionId",
+                json_build_object(
+                  'studentId', u.userid,
+                  'firstName', u.firstname,
+                  'lastName', u.lastname
+                ) AS "studentInfo",
+                s.content,
+                COALESCE(json_agg(json_build_object('filename', f.filename, 'url', f.url))
+                  FILTER (WHERE f.file_id IS NOT NULL), '[]'::json) AS "attachment",
+                s.submitted_at AS "submittedAt",
+                s.score,
+                s.teacher_comment AS "teacherComment"
+         FROM submissions s
+         JOIN users u ON s.student_id = u.userid
+         LEFT JOIN submission_files f ON f.submission_id = s.submission_id
+         WHERE s.assignment_id = $1
+         GROUP BY s.submission_id, u.userid, u.firstname, u.lastname
+         ORDER BY s.submitted_at ASC`,
+        [assignmentId]
+      );
+
+      assignment.submissions = submissionsRes.rows;
+      return res.json(assignment);
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

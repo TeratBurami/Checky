@@ -1,16 +1,13 @@
 import { Router } from "express";
 import db from "../../config/db.js";
-import jwt from "jsonwebtoken";
+import { authenticateJWT } from "../../middleware/auth.js";
 
 const router = Router();
 
 //GET all peer reviews that belong to User
-router.get("/", async (req, res) => {
+router.get("/", authenticateJWT("student"), async (req, res) => {
     try {
-        const token = req.cookies.token;
-        if (!token) return res.status(401).json({ error: "Unauthorized" });
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const student_id = decoded.userid;
+        const student_id = req.user.userid;
         const { rows } = await db.query(
             `
                 SELECT * FROM peer_reviews
@@ -41,7 +38,7 @@ router.get("/admin/all", async (req, res) => {
 });
 
 // PUT sent comment in peer review AND generate a NEW_COMMENT notification
-router.put("/:review_id", async (req, res) => {
+router.put("/:review_id", authenticateJWT("student"), async (req, res) => {
     const client = await db.connect();
     try {
         await client.query('BEGIN'); 

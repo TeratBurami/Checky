@@ -1,6 +1,6 @@
 import { Router } from "express";
 import db from "../../config/db.js";
-import jwt from "jsonwebtoken";
+import { authenticateJWT } from "../../middleware/auth.js";
 
 const router = Router();
 
@@ -29,12 +29,9 @@ router.get("/admin/all", async (req, res) => {
 });
 
 // GET all notifications for a user
-router.get("/", async (req, res) => {
+router.get("/", authenticateJWT("student", "teacher"), async (req, res) => {
     try {
-        const token = req.cookies.token;
-        if (!token) return res.status(401).json({ error: "Unauthorized" });
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decoded.userid;
+        const userId = req.user.userid;
         const { rows } = await db.query(
             `
                 SELECT 

@@ -1,6 +1,5 @@
 import { Router } from "express";
 import db from "../../config/db.js";
-import jwt from "jsonwebtoken";
 import { authenticateJWT } from "../../middleware/auth.js";
 
 const router = Router();
