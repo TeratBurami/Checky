@@ -6,6 +6,7 @@ import assignmentApi from "./apis/assignment.js";
 import notificationApi from "./apis/notification.js";
 import submissionsApi from "./apis/submissions.js";
 import peerReviewsApi from "./apis/peer-reviews.js";
+import dashboardApi from "./apis/dashboard.js";
 
 const router = Router();
 
@@ -13,8 +14,9 @@ router.use("/auth", usersApi);
 router.use("/class", classesApi);
 router.use("/class", assignmentApi);
 router.use("/class", peerReviewsApi);
+router.use("/class", submissionsApi);
 router.use("/rubric", rubricApi);
 router.use("/notifications", notificationApi);
-router.use("/submissions", submissionsApi);
+router.use("/dashboard", dashboardApi);
 
 export default router;

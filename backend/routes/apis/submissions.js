@@ -3,7 +3,7 @@ import multer from "multer";
 import db from "../../config/db.js";
 import path from "path";
 import fs from "fs";
-import jwt from "jsonwebtoken";
+import { authenticateJWT } from "../../middleware/auth.js";
 
 const router = express.Router();
 
@@ -46,10 +46,11 @@ router.get("/download/:file_id", async (req, res) => {
 // ----------------------
 // Create/update submission with files
 // ----------------------
-router.post("/:assignment_id/submission", upload.array("files"), async (req, res) => {
+router.post("/:assignment_id/submission", authenticateJWT(["student"]), upload.array("files"), async (req, res) => {
   try {
     const { assignment_id } = req.params;
-    const { student_id, content } = req.body;
+    const student_id = req.user.userid;
+    const { content } = req.body;
 
     const submissionResult = await db.query(
       `INSERT INTO submissions (assignment_id, student_id, content)
@@ -59,7 +60,6 @@ router.post("/:assignment_id/submission", upload.array("files"), async (req, res
        RETURNING submission_id`,
       [assignment_id, student_id, content]
     );
-
     const submission_id = submissionResult.rows[0].submission_id;
 
     const files = req.files || [];
@@ -79,6 +79,30 @@ router.post("/:assignment_id/submission", upload.array("files"), async (req, res
     res.status(500).json({ error: err.message });
   }
 });
+
+// Update score and teacher comment for a submission (teacher only)
+router.put("/:submission_id/grade", authenticateJWT(["teacher"]), async (req, res) => {
+  const { submission_id } = req.params;
+  const { score, teacher_comment } = req.body;
+
+  try {
+    const result = await db.query(
+      `UPDATE submissions
+       SET score = $1, teacher_comment = $2
+       WHERE submission_id = $3
+       RETURNING *`,
+      [score, teacher_comment, submission_id]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(404).json({ error: "Submission not found" });
+
+    res.status(200).json({ message: "Submission graded successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // ----------------------
 // List all submissions with files
@@ -135,17 +159,11 @@ router.get("/:assignment_id/:student_id", async (req, res) => {
 });
 
 // Delete a single file from a submission
-router.delete("/:assignment_id/:file_id", async (req, res) => {
+router.delete("/:assignment_id/:file_id", authenticateJWT(["student"]), async (req, res) => {
   try {
     const { assignment_id, file_id } = req.params;
+    const student_id = req.user.userid;
 
-    // Get student_id from JWT
-    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const student_id = decoded.userid; // matches your JWT payload
-
-    // Get submission_id for this assignment and student
     const { rows: submissionRows } = await db.query(
       `SELECT submission_id FROM submissions WHERE assignment_id=$1 AND student_id=$2`,
       [assignment_id, student_id]
@@ -154,7 +172,6 @@ router.delete("/:assignment_id/:file_id", async (req, res) => {
 
     const submission_id = submissionRows[0].submission_id;
 
-    // Get file info
     const { rows: files } = await db.query(
       `SELECT url FROM submission_files WHERE submission_id=$1 AND file_id=$2`,
       [submission_id, file_id]
@@ -164,7 +181,6 @@ router.delete("/:assignment_id/:file_id", async (req, res) => {
     const filePath = path.join(process.cwd(), "uploads", files[0].url);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    // Delete file record
     await db.query(`DELETE FROM submission_files WHERE file_id=$1`, [file_id]);
 
     res.json({ message: "File deleted successfully" });
@@ -172,6 +188,5 @@ router.delete("/:assignment_id/:file_id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 export default router;
