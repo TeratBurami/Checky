@@ -1,22 +1,18 @@
 import { Router } from "express";
-import db from "../config/db.js";
+import db from "../../config/db.js";
 import jwt from "jsonwebtoken";
+import { authenticateJWT } from "../../middleware/auth.js";
 
 const router = Router();
 
 // POST create new assignment
-router.post("/:classId/assignment", async (req, res) => {
+router.post("/:classId/assignment", authenticateJWT(["teacher"]), async (req, res) => {
   const { classId } = req.params;
   const { title, description, deadline, rubricId } = req.body;
 
   try {
-    const token = req.cookies.token;
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
+    const teacherId = req.user.userid;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const teacherId = decoded.userid;
-
-    // Validate rubric exists for this teacher
     const rubricCheck = await db.query(
       "SELECT rubric_id FROM rubrics WHERE rubric_id = $1 AND teacherID = $2",
       [rubricId, teacherId]
@@ -35,13 +31,10 @@ router.post("/:classId/assignment", async (req, res) => {
 
     const assignment = rows[0];
 
-    // Get all students in class
     const { rows: students } = await db.query(
       "SELECT studentID FROM classMembers WHERE classID = $1",
       [classId]
     );
-
-    // Create notifications
     if (students.length > 0) {
       const notifications = students.map((s) => [
         s.studentid,
@@ -149,37 +142,48 @@ router.get("/:classId/assignment", async (req, res) => {
   }
 });
 
-router.put("/:classId/:assignmentId", async (req, res) => {
+// UPDATE assignment (only teacher who owns the class)
+router.put("/:classId/:assignmentId", authenticateJWT(['teacher']), async (req, res) => {
   const { classId, assignmentId } = req.params;
   const { title, description, deadline, rubricId } = req.body;
+  const teacherId = req.user.userid;
+
   try {
     const result = await db.query(
-      `UPDATE assignments
-        SET title=$1, description=$2, deadline=$3, rubric_id=$4
-        WHERE assignment_id=$5 AND class_id=$6
-        RETURNING assignment_id AS "assignmentId", title, description, deadline, rubric_id AS "rubricId"`,
-      [title, description, deadline, rubricId, assignmentId, classId]
+      `UPDATE assignments a
+       SET title=$1, description=$2, deadline=$3, rubric_id=$4
+       FROM classes c
+       WHERE a.assignment_id=$5 AND a.class_id=$6 AND c.classID=$6 AND c.teacherID=$7
+       RETURNING a.assignment_id AS "assignmentId", a.title, a.description, a.deadline, a.rubric_id AS "rubricId"`,
+      [title, description, deadline, rubricId, assignmentId, classId, teacherId]
     );
+
     if (result.rows.length === 0)
-      return res.status(404).json({ error: "Assignment not found" });
+      return res.status(403).json({ error: "Forbidden: you do not teach this class or assignment not found" });
+
     res.json({ assignment: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE an assignment
-router.delete("/:classId/:assignmentId", async (req, res) => {
+// DELETE assignment (only teacher who owns the class)
+router.delete("/:classId/:assignmentId", authenticateJWT(['teacher']), async (req, res) => {
   const { classId, assignmentId } = req.params;
+  const teacherId = req.user.userid;
+
   try {
     const result = await db.query(
-      `DELETE FROM assignments
-        WHERE assignment_id=$1 AND class_id=$2
-        RETURNING assignment_id AS "assignmentId"`,
-      [assignmentId, classId]
+      `DELETE FROM assignments a
+       USING classes c
+       WHERE a.assignment_id=$1 AND a.class_id=$2 AND c.classID=$2 AND c.teacherID=$3
+       RETURNING a.assignment_id AS "assignmentId"`,
+      [assignmentId, classId, teacherId]
     );
+
     if (result.rows.length === 0)
-      return res.status(404).json({ error: "Assignment not found" });
+      return res.status(403).json({ error: "Forbidden: you do not teach this class or assignment not found" });
+
     res.json({ message: "Assignment deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });

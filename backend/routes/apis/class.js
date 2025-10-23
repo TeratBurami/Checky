@@ -1,6 +1,7 @@
 import { Router } from "express";
-import db from "../config/db.js";
+import db from "../../config/db.js";
 import jwt from "jsonwebtoken";
+import { authenticateJWT } from "../../middleware/auth.js";
 
 const router = Router();
 
@@ -24,16 +25,11 @@ router.get("/", async (req, res) => {
 });
 
 // POST create a new class (stuck at non-null constraint error from db)
-router.post("/", async (req, res) => {
+router.post("/", authenticateJWT(['teacher']), async (req, res) => {
     const { name, description } = req.body;
 
     try {
-        const token = req.cookies.token;
-        if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const teacherID = decoded.userid;
-
+        const teacherID = req.user.userid;
         const { rows: teacherRows } = await db.query(
             "SELECT firstName, lastName FROM users WHERE userID=$1 AND role='teacher'",
             [teacherID]
@@ -64,17 +60,23 @@ router.post("/", async (req, res) => {
     }
 });
 
-// PUT update class info
-router.put("/:classId", async (req, res) => {
+router.put("/:classId", authenticateJWT(['teacher']), async (req, res) => {
     const classId = req.params.classId;
     const { name, description } = req.body;
+    const teacherId = req.user.userid; 
+
     try {
-        await db.query(
-            `
-      UPDATE classes SET name = $1, description = $2 WHERE classID = $3
-      `,
-            [name, description, classId]
+        const { rowCount } = await db.query(
+            `UPDATE classes
+             SET name = $1, description = $2
+             WHERE classID = $3 AND teacherID = $4`,
+            [name, description, classId, teacherId]
         );
+
+        if (rowCount === 0) {
+            return res.status(403).json({ error: "Forbidden: you do not teach this class or class not found" });
+        }
+
         res.status(200).json({
             status: res.statusCode,
             msg: "Class updated successfully",
@@ -84,14 +86,22 @@ router.put("/:classId", async (req, res) => {
     }
 });
 
-
 // DELETE a class
-router.delete("/:classId", async (req, res) => {
+router.delete("/:classId", authenticateJWT(['teacher']), async (req, res) => {
     const classId = req.params.classId;
+    const teacherId = req.user.userid; 
+
     try {
-        await db.query(`DELETE FROM classes WHERE classID = $1
-      `, [classId]
+        const { rowCount } = await db.query(
+            `DELETE FROM classes 
+             WHERE classID = $1 AND teacherID = $2`,
+            [classId, teacherId]
         );
+
+        if (rowCount === 0) {
+            return res.status(403).json({ error: "Forbidden: you do not teach this class or class not found" });
+        }
+
         res.status(200).json({
             status: res.statusCode,
             msg: "Class deleted successfully",
@@ -100,6 +110,7 @@ router.delete("/:classId", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 
 // GET class by ID (with assignment list)
 router.get("/:classId", async (req, res) => {
@@ -169,17 +180,11 @@ router.get("/:classId/members", async (req, res) => {
     }
 });
 
-router.post("/join", async (req, res) => {
+router.post("/join", authenticateJWT(["student"]), async (req, res) => {
     const { classCode } = req.body;
 
     try {
-        const token = req.cookies.token;
-        console.log("Token:", token);
-        if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log("Decoded:", decoded);
-        const studentId = decoded.userid;
+        const studentId = req.user.userid;
 
         // find class by code
         const classResult = await db.query(
@@ -214,7 +219,7 @@ router.post("/join", async (req, res) => {
 });
 
 // POST add student to class with email
-router.post("/:classId/invitations", async (req, res) => {
+router.post("/:classId/invitations", authenticateJWT(["teacher"]), async (req, res) => {
     const classId = req.params.classId;
     const { studentEmail } = req.body;
     try {

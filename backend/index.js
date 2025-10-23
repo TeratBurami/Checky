@@ -1,13 +1,18 @@
 import express from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
-import apiRoutes from "./apis/index.js";
+import apiRoutes from "./routes/index.js";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 dotenv.config();
 const app = express();
+
+app.use(cors());
+
 app.use(bodyParser.json());
 app.use(cookieParser());
+app.use("/uploads", express.static("uploads"));
 
 app.use("/api/v1", apiRoutes);
 
