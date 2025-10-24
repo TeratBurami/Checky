@@ -4,6 +4,75 @@ import { authenticateJWT } from "../../middleware/auth.js";
 
 const router = Router();
 
+// POST create a new peer review and notify the reviewer
+router.post("/", authenticateJWT("teacher"), async (req, res) => {
+    const client = await db.connect();
+    try {
+        await client.query("BEGIN");
+
+        const { submission_id, reviewer_id, review_deadline } = req.body;
+        const teacher_id = req.user.userid;
+
+        // Check submission exists and belongs to a class the teacher owns
+        const { rows: submissionRows } = await client.query(
+            `SELECT s.submission_id, s.student_id, a.class_id
+             FROM submissions s
+             JOIN assignments a ON a.assignment_id = s.assignment_id
+             JOIN classes c ON c.classID = a.class_id
+             WHERE s.submission_id = $1 AND c.teacherID = $2`,
+            [submission_id, teacher_id]
+        );
+
+        if (submissionRows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ error: "Submission not found or not allowed" });
+        }
+
+        const class_id = submissionRows[0].class_id;
+
+        // Check reviewer is in class
+        const { rows: memberRows } = await client.query(
+            `SELECT * FROM classMembers
+             WHERE classID = $1 AND studentID = $2`,
+            [class_id, reviewer_id]
+        );
+
+        if (memberRows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(403).json({ error: "Reviewer not enrolled in class" });
+        }
+
+        // Insert peer review
+        const { rows: reviewRows } = await client.query(
+            `INSERT INTO peer_reviews (submission_id, reviewer_id, review_deadline)
+             VALUES ($1, $2, $3)
+             RETURNING review_id, submission_id, reviewer_id, status, created_at`,
+            [submission_id, reviewer_id, review_deadline]
+        );
+
+        const review = reviewRows[0];
+
+        // Create notification for reviewer
+        await client.query(
+            `INSERT INTO notifications (user_id, type, message, link)
+             SELECT $1, 'PEER_REVIEW_ASSIGNED', 
+             CONCAT('You have been assigned a peer review for submission ID: ', $2), 
+             '/submission/' || $2 || '/review'`,
+            [reviewer_id, submission_id]
+        );
+
+        await client.query("COMMIT");
+        res.status(201).json({ message: "Peer review assigned", review });
+    } catch (err) {
+        await client.query("ROLLBACK");
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+});
+
+
 //GET all peer reviews that belong to User
 router.get("/", authenticateJWT("student"), async (req, res) => {
     try {
