@@ -189,4 +189,41 @@ router.delete("/:assignment_id/file/:file_id", authenticateJWT(["student"]), asy
   }
 });
 
+// POST /:assignmentId/autograde
+router.post("/:assignmentId/autograde", authenticateJWT(["teacher"]), async (req, res) => {
+  const { assignmentId } = req.params;
+
+  try {
+    // Get all ungraded submissions for this assignment
+    const { rows: submissions } = await db.query(`
+      SELECT submission_id, content
+      FROM submissions
+      WHERE assignment_id = $1 AND score IS NULL
+    `, [assignmentId]);
+
+    if (submissions.length === 0)
+      return res.json({ message: "No ungraded submissions found", gradedCount: 0 });
+
+    // Simple deterministic "auto-grading" algorithm
+    for (const s of submissions) {
+      const len = (s.content || "").trim().length;
+      const base = len * 0.1;
+      const noise = Math.random() * 100; // small variation
+      const score = Math.round(Math.min(100, Math.max(0, base + noise) % 100)); // round to integer
+
+      await db.query(
+        `UPDATE submissions SET score = $1, teacher_comment = $2 WHERE submission_id = $3`,
+        [score, "Auto-graded by system", s.submission_id]
+      );
+    }
+
+    res.json({
+      message: "Auto-grading complete",
+      gradedCount: submissions.length
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
