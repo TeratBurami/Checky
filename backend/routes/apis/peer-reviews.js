@@ -55,9 +55,10 @@ router.post("/", authenticateJWT("teacher"), async (req, res) => {
         // Create notification for reviewer
         await client.query(
             `INSERT INTO notifications (user_id, type, message, link)
-             SELECT $1, 'PEER_REVIEW_ASSIGNED', 
-             CONCAT('You have been assigned a peer review for submission ID: ', $2), 
-             '/submission/' || $2 || '/review'`,
+            SELECT $1, 'PEER_REVIEW_ASSIGNED', 
+            CONCAT('You have been assigned a peer review for submission ID: ', $2::TEXT), 
+            '/submission/' || $2::TEXT || '/review'
+            `,
             [reviewer_id, submission_id]
         );
 
@@ -106,19 +107,38 @@ router.get("/admin/all", async (req, res) => {
     }
 });
 
-// PUT sent comment in peer review AND generate a NEW_COMMENT notification
+// PUT: Submit comment in peer review AND generate NEW_COMMENT notification
 router.put("/:review_id", authenticateJWT("student"), async (req, res) => {
     const client = await db.connect();
     try {
-        await client.query('BEGIN'); 
+        await client.query("BEGIN");
 
         const { review_id } = req.params;
         const { comments } = req.body;
+        const userId = req.user.userid;
+
+        // Check if the user is the assigned reviewer
+        const { rows: checkRows } = await client.query(
+            "SELECT reviewer_id FROM peer_reviews WHERE review_id = $1",
+            [review_id]
+        );
+
+        if (checkRows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ error: "Peer review not found" });
+        }
+
+        if (checkRows[0].reviewer_id !== userId) {
+            await client.query("ROLLBACK");
+            return res.status(403).json({ error: "You are not authorized to review this submission" });
+        }
+
+        // Update review (without updated_at)
         const { rows } = await client.query(
             `
             WITH updated_review AS (
                 UPDATE peer_reviews
-                SET comments = $1, status = 'COMPLETED', updated_at = NOW()
+                SET comments = $1, status = 'COMPLETED'
                 WHERE review_id = $2
                 RETURNING submission_id, reviewer_id
             ),
@@ -147,36 +167,26 @@ router.put("/:review_id", authenticateJWT("student"), async (req, res) => {
             SELECT
                 nd.student_id,
                 'NEW_COMMENT',
-                nd.reviewer_name || ' left a comment on your peer review for assignment: ' || nd.assignment_title || '.',
-                '/submission/' || nd.submission_id || '/review'
+                CONCAT(nd.reviewer_name, ' left a comment on your peer review for assignment: ', nd.assignment_title, '.'),
+                CONCAT('/submission/', nd.submission_id, '/review')
             FROM notification_data nd
-            RETURNING user_id AS student_notified_id; -- Return a dummy row to know if anything ran
+            RETURNING user_id AS student_notified_id;
             `,
             [comments, review_id]
         );
-        
 
-        if (rows.length === 0) {
-            // Check if review was even found before assuming notification failed
-            const { rows: checkRows } = await client.query('SELECT review_id FROM peer_reviews WHERE review_id = $1', [review_id]);
-            if (checkRows.length === 0) {
-                await client.query('ROLLBACK');
-                return res.status(404).json({ error: "Peer review not found" });
-            }
-            // If rows.length === 0 but checkRows.length > 0, something went wrong with notification insertion
-            console.warn(`Review ID ${review_id} updated, but notification failed to insert.`);
-        }
-
-
-        await client.query('COMMIT'); 
-        res.json({ review_id: review_id, status: 'COMPLETED', message: "Review completed and student notified." });
-        
+        await client.query("COMMIT");
+        res.json({
+            review_id,
+            status: "COMPLETED",
+            message: "Review completed and student notified."
+        });
     } catch (err) {
-        await client.query('ROLLBACK'); 
+        await client.query("ROLLBACK");
         console.error("Error updating peer review and generating notification:", err.message);
         res.status(500).json({ error: err.message });
     } finally {
-        client.release(); 
+        client.release();
     }
 });
 
