@@ -107,7 +107,7 @@ router.put("/:submission_id/grade", authenticateJWT(["teacher"]), async (req, re
 // ----------------------
 // List all submissions with files
 // ----------------------
-router.get("/:assignment_id", async (req, res) => {
+router.get("/:assignment_id/submission/all", async (req, res) => {
   try {
     const { assignment_id } = req.params;
 
@@ -133,7 +133,7 @@ router.get("/:assignment_id", async (req, res) => {
 // ----------------------
 // Get single student's submission with files
 // ----------------------
-router.get("/:assignment_id/:student_id", async (req, res) => {
+router.get("/:assignment_id/student/:student_id", async (req, res) => {
   try {
     const { assignment_id, student_id } = req.params;
 
@@ -159,7 +159,7 @@ router.get("/:assignment_id/:student_id", async (req, res) => {
 });
 
 // Delete a single file from a submission
-router.delete("/:assignment_id/:file_id", authenticateJWT(["student"]), async (req, res) => {
+router.delete("/:assignment_id/file/:file_id", authenticateJWT(["student"]), async (req, res) => {
   try {
     const { assignment_id, file_id } = req.params;
     const student_id = req.user.userid;
