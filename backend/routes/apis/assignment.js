@@ -142,7 +142,7 @@ router.get("/:classId/assignment", async (req, res) => {
 });
 
 // UPDATE assignment (only teacher who owns the class)
-router.put("/:classId/:assignmentId", authenticateJWT(['teacher']), async (req, res) => {
+router.put("/:classId/assignment/:assignmentId", authenticateJWT(['teacher']), async (req, res) => {
   const { classId, assignmentId } = req.params;
   const { title, description, deadline, rubricId } = req.body;
   const teacherId = req.user.userid;
@@ -167,7 +167,7 @@ router.put("/:classId/:assignmentId", authenticateJWT(['teacher']), async (req, 
 });
 
 // DELETE assignment (only teacher who owns the class)
-router.delete("/:classId/:assignmentId", authenticateJWT(['teacher']), async (req, res) => {
+router.delete("/:classId/assignment/:assignmentId", authenticateJWT(['teacher']), async (req, res) => {
   const { classId, assignmentId } = req.params;
   const teacherId = req.user.userid;
 
@@ -190,7 +190,7 @@ router.delete("/:classId/:assignmentId", authenticateJWT(['teacher']), async (re
 });
 
 // GET assignment detail (role-based)
-router.get("/:classId/:assignmentId", authenticateJWT(['student', 'teacher']), async (req, res) => {
+router.get("/:classId/assignment/:assignmentId", authenticateJWT(['student', 'teacher']), async (req, res) => {
   const { classId, assignmentId } = req.params;
   const { role, userid } = req.user;
 
