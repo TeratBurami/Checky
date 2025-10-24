@@ -22,3 +22,19 @@ export interface Member{
     lastName:string;
     role:string;
 }
+
+export interface Rubric {
+    rubricId: number;
+    name: string;
+    created_at: string;
+    criteria: Array<{
+        criterionId: number;
+        title: string;
+        levels: Array<{
+            levelId: number;
+            level: string;
+            score: number;
+            description: string;
+        }>;
+    }>;
+}

@@ -1,24 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { Rubric } from "@/lib/types";
 
-interface Rubric {
-    rubricId: number;
-    name: string;
-    created_at: string;
-    criteria: Array<{
-        criterionId: number;
-        title: string;
-        levels: Array<{
-            levelId: number;
-            level: string;
-            score: number;
-            description: string;
-        }>;
-    }>;
-}
-
-export default function Rubric(){
+export default function RubricPage(){
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [rubrics, setRubrics] = useState<Rubric[]>([]);
@@ -44,33 +29,38 @@ export default function Rubric(){
             finally {
                 setLoading(false);
             }
-
-            // const handleOnClickNewRubric = () => {
-            //     window.location.href = "/rubric/create";
-            // };
         }
+
+        
 
         fetchRubrics();
     }, []);
 
-    const calculateTotalPoints = (rubric: Rubric): number => {
-        return rubric.criteria.reduce((total, criterion) => {
-            const criterionTotal = criterion.levels.reduce((sum, level) => sum + level.score, 0);
-            return total + criterionTotal;
-        }, 0);
+    const handleDeleteRubric = async (rubricId: number) => {
+        if (!confirm("Are you sure you want to delete this rubric?")) return;
+
+        try {
+            const response = await fetch(`http://localhost:3000/api/v1/rubric/${rubricId}`, {
+            method: "DELETE",
+            credentials: "include",
+            });
+
+            if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            setRubrics((prevRubrics) => prevRubrics.filter((r) => r.rubricId !== rubricId));
+        } catch (e: any) {
+            console.error("Failed to delete rubric:", e);
+            alert("Failed to delete rubric. Please try again.");
+        }
     };
 
-    const formatDate = (dateString: string): string => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffTime = Math.abs(now.getTime() - date.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) return "Updated today";
-        if (diffDays === 1) return "Updated yesterday";
-        if (diffDays < 7) return `Updated ${diffDays} days ago`;
-        if (diffDays < 30) return `Updated ${Math.floor(diffDays / 7)} weeks ago`;
-        return `Updated ${Math.floor(diffDays / 30)} months ago`;
+    const calculateMaxPoints = (rubric: Rubric): number => {
+        return rubric.criteria.reduce((total, criterion) => {
+            const maxScore = criterion.levels.reduce((max, level) => Math.max(max, level.score), 0);
+            return total + maxScore;
+        }, 0);
     };
 
     return(
@@ -80,8 +70,8 @@ export default function Rubric(){
                     <h1 className="text-4xl font-bold">My Rubrics</h1>
                     <p className="text-sm font-medium text-neutral-500">Manage your grading schemas. Create, edit, and reuse them across your classes.</p>
                 </div>
-                <Link href="/rubric/create" className="flex w-[180px] h-[52px] rounded-2xl text-white justify-center items-center bg-[#EA583E]">
-                    <p className="text-lg font-medium">Create Rubric</p>
+                <Link href="/rubric/create" className="flex w-[180px] h-[52px] rounded-2xl text-white justify-center items-center bg-[#EA583E] shadow">
+                    <p className="text-lg font-medium ">Create Rubric</p>
                 </Link>
             </div>
 
@@ -104,19 +94,23 @@ export default function Rubric(){
                 ) : (
                     rubrics.map((rubric) => (
                         <div key={rubric.rubricId} className="bg-[#FDFBEF] rounded-xl p-5 shadow-sm border border-gray-200">
-                            <h2 className="text-xl font-semibold text-gray-800">{rubric.name}</h2>
+                            <Link href = {`/rubric/${rubric.rubricId}`} className="text-xl font-semibold text-gray-800">{rubric.name}</Link>
                             <div className="flex flex-wrap gap-2 mt-3">
                                 <span className="px-3 py-1 text-sm bg-[#F4F2E7] rounded-full text-gray-700 border border-black/15">
                                     {rubric.criteria.length} Criteria
                                 </span>
                                 <span className="px-3 py-1 text-sm bg-[#F4F2E7] rounded-full text-gray-700 border border-black/15">
-                                    {calculateTotalPoints(rubric)} Total Points
+                                    {calculateMaxPoints(rubric)} Total Points
                                 </span>
                             </div>
-                            <p className="text-sm text-gray-500 mt-3">{formatDate(rubric.created_at)}</p>
                             <div className="flex gap-4 mt-3">
-                                <button className="text-indigo-600 hover:underline">Edit</button>
-                                <button className="text-red-500 hover:underline">Delete</button>
+                                <Link href={`/rubric/edit/${rubric.rubricId}`} className="text-indigo-600 hover:underline">Edit</Link>
+                                <button
+                                    onClick={() => handleDeleteRubric(rubric.rubricId)}
+                                    className="text-red-500 hover:underline"
+                                >
+                                    Delete
+                                </button>
                             </div>
                         </div>
                     ))
