@@ -23,22 +23,38 @@ export interface Member{
     role:string;
 }
 
-export interface RubricCriterionLevel {
-  levelId: number;
-  levelName: string;
-  score: number;
-  description: string;
-}
-export interface RubricCriterion {
-  criterionId: number;
-  title: string;
-  levels: RubricCriterionLevel[];
-}
 export interface Rubric {
-  rubricId: number;
-  name: string;
-  criteria: RubricCriterion[];
+    rubricId: number;
+    name: string;
+    created_at: string;
+    criteria: Array<{
+        criterionId: number;
+        title: string;
+        levels: Array<{
+            levelId: number;
+            level: string;
+            score: number;
+            description: string;
+        }>;
+    }>;
 }
+
+// export interface RubricCriterionLevel {
+//   levelId: number;
+//   levelName: string;
+//   score: number;
+//   description: string;
+// }
+// export interface RubricCriterion {
+//   criterionId: number;
+//   title: string;
+//   levels: RubricCriterionLevel[];
+// }
+// export interface Rubric {
+//   rubricId: number;
+//   name: string;
+//   criteria: RubricCriterion[];
+// }
 
 export interface Assignment {
   assignmentId: number;

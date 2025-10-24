@@ -123,4 +123,154 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const teacherId = verifyToken(req);
+    const { rows } = await db.query(
+      `${RUBRIC_QUERY}
+       WHERE r.rubric_id = $1 AND r.teacherID = $2
+       GROUP BY r.rubric_id`,
+      [id, teacherId]
+    );
+
+    if (rows.length === 0)
+      return res.status(404).json({ error: "Rubric not found" });
+
+    res.json(rows[0]);
+  } catch (err) {
+    res
+      .status(err.message === "Unauthorized" ? 401 : 500)
+      .json({ error: err.message });
+  }
+});
+
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { rubric } = req.body;
+
+  if (!rubric?.name || !Array.isArray(rubric.criteria))
+    return res.status(400).json({ error: "Invalid request body" });
+
+  try {
+    const teacherId = verifyToken(req);
+    await db.query("BEGIN");
+
+    // Verify rubric ownership
+    const { rows: checkRows } = await db.query(
+      `SELECT rubric_id FROM rubrics WHERE rubric_id = $1 AND teacherID = $2`,
+      [id, teacherId]
+    );
+    if (checkRows.length === 0)
+      throw new Error("Rubric not found or not owned by user");
+
+    // Update rubric name
+    await db.query(`UPDATE rubrics SET name = $1 WHERE rubric_id = $2`, [
+      rubric.name,
+      id,
+    ]);
+
+    // Remove old criteria & levels to simplify updates
+    await db.query(
+      `DELETE FROM rubric_levels WHERE criterion_id IN (
+         SELECT criterion_id FROM rubric_criteria WHERE rubric_id = $1
+       )`,
+      [id]
+    );
+    await db.query(`DELETE FROM rubric_criteria WHERE rubric_id = $1`, [id]);
+
+    // Recreate criteria and levels
+    const createdCriteria = [];
+
+    for (const criterion of rubric.criteria) {
+      if (!criterion.title || !Array.isArray(criterion.levels)) continue;
+
+      const {
+        rows: [critRow],
+      } = await db.query(
+        `INSERT INTO rubric_criteria (rubric_id, title)
+         VALUES ($1, $2) RETURNING criterion_id, title`,
+        [id, criterion.title]
+      );
+
+      const levels = criterion.levels.filter(
+        (l) => l.level && l.score != null
+      );
+      if (levels.length) {
+        const values = levels
+          .map(
+            (_, i) =>
+              `($1, $${i * 3 + 2}, $${i * 3 + 3}, $${i * 3 + 4})`
+          )
+          .join(",");
+        const params = [
+          critRow.criterion_id,
+          ...levels.flatMap((l) => [l.level, l.score, l.description || null]),
+        ];
+        const { rows: levelRows } = await db.query(
+          `INSERT INTO rubric_levels (criterion_id, level_name, score, description)
+           VALUES ${values}
+           RETURNING level_id, level_name AS level, score, description`,
+          params
+        );
+        createdCriteria.push({
+          criterionId: critRow.criterion_id,
+          title: critRow.title,
+          levels: levelRows,
+        });
+      }
+    }
+
+    await db.query("COMMIT");
+    res.json({
+      message: "Rubric updated successfully",
+      rubric: { rubricId: id, name: rubric.name, criteria: createdCriteria },
+    });
+  } catch (err) {
+    await db.query("ROLLBACK");
+    const code =
+      err.message === "Unauthorized"
+        ? 401
+        : err.message.includes("not found")
+        ? 404
+        : 500;
+    res.status(code).json({ error: err.message });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const teacherId = verifyToken(req);
+    await db.query("BEGIN");
+
+    // Verify ownership
+    const { rows: checkRows } = await db.query(
+      `SELECT rubric_id FROM rubrics WHERE rubric_id = $1 AND teacherID = $2`,
+      [id, teacherId]
+    );
+    if (checkRows.length === 0)
+      throw new Error("Rubric not found or not owned by user");
+
+    // Delete levels → criteria → rubric
+    await db.query(
+      `DELETE FROM rubric_levels WHERE criterion_id IN (
+         SELECT criterion_id FROM rubric_criteria WHERE rubric_id = $1
+       )`,
+      [id]
+    );
+    await db.query(`DELETE FROM rubric_criteria WHERE rubric_id = $1`, [id]);
+    await db.query(`DELETE FROM rubrics WHERE rubric_id = $1`, [id]);
+
+    await db.query("COMMIT");
+    res.json({ message: "Rubric deleted successfully" });
+  } catch (err) {
+    await db.query("ROLLBACK");
+    res
+      .status(err.message === "Unauthorized" ? 401 : 500)
+      .json({ error: err.message });
+  }
+});
+
+
 export default router;
