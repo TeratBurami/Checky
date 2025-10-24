@@ -122,7 +122,7 @@ router.get("/:classId", authenticateJWT(), async (req, res) => {
             SELECT 
                 c.classID, c.name, c.description, c.classCode,
                 u.userID AS teacher_userId, u.firstName AS teacher_firstName, u.lastName AS teacher_lastName,
-                a.assignment_id, a.title AS assignment_title, a.deadline AS assignment_deadline,
+                a.assignment_id, a.title AS assignment_title, a.created_at AS open_date, a.deadline AS assignment_deadline,
                 s.submission_id, s.score, s.submitted_at
             FROM classes c
             LEFT JOIN users u ON c.teacherID = u.userID
@@ -151,6 +151,7 @@ router.get("/:classId", authenticateJWT(), async (req, res) => {
             return {
                 assignmentId: a.assignment_id,
                 title: a.assignment_title,
+                openDate: a.open_date,
                 deadline: a.assignment_deadline,
                 status,
             };
