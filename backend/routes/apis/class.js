@@ -62,7 +62,7 @@ router.post("/", authenticateJWT(['teacher']), async (req, res) => {
 router.put("/:classId", authenticateJWT(['teacher']), async (req, res) => {
     const classId = req.params.classId;
     const { name, description } = req.body;
-    const teacherId = req.user.userid; 
+    const teacherId = req.user.userid;
 
     try {
         const { rowCount } = await db.query(
@@ -88,7 +88,7 @@ router.put("/:classId", authenticateJWT(['teacher']), async (req, res) => {
 // DELETE a class
 router.delete("/:classId", authenticateJWT(['teacher']), async (req, res) => {
     const classId = req.params.classId;
-    const teacherId = req.user.userid; 
+    const teacherId = req.user.userid;
 
     try {
         const { rowCount } = await db.query(
@@ -111,28 +111,34 @@ router.delete("/:classId", authenticateJWT(['teacher']), async (req, res) => {
 });
 
 
-// GET class by ID (with assignment list)
-router.get("/:classId", async (req, res) => {
-    const classId = req.params.classId;
+// GET class by ID (with assignment list + role-based info)
+router.get("/:classId", authenticateJWT(), async (req, res) => {
+    const { classId } = req.params;
+    const user = req.user;
+
     try {
-        const { rows } = await db.query(
-            `
+        // Base class and assignments info
+        const { rows } = await db.query(`
             SELECT 
                 c.classID, c.name, c.description, c.classCode,
                 u.userID AS teacher_userId, u.firstName AS teacher_firstName, u.lastName AS teacher_lastName,
                 a.assignment_id, a.title AS assignment_title, a.deadline AS assignment_deadline
-                FROM classes c
-                LEFT JOIN users u ON c.teacherID = u.userID
-                LEFT JOIN assignments a ON c.classID = a.class_id
-                WHERE c.classID = $1
-                ORDER BY a.created_at ASC
-            `,
-            [classId]
-        );
+            FROM classes c
+            LEFT JOIN users u ON c.teacherID = u.userID
+            LEFT JOIN assignments a ON c.classID = a.class_id
+            WHERE c.classID = $1
+            ORDER BY a.created_at ASC
+        `, [classId]);
 
         if (rows.length === 0) return res.status(404).json({ error: "Class not found" });
 
         const first = rows[0];
+        const assignments = rows.filter(r => r.assignment_id).map(a => ({
+            assignmentId: a.assignment_id,
+            title: a.assignment_title,
+            deadline: a.assignment_deadline,
+        }));
+
         const result = {
             classId: first.classid,
             name: first.name,
@@ -143,14 +149,40 @@ router.get("/:classId", async (req, res) => {
                 firstName: first.teacher_firstname,
                 lastName: first.teacher_lastname,
             },
-            assignments: rows
-                .filter(r => r.assignment_id)
-                .map(a => ({
-                    assignmentId: a.assignment_id,
-                    title: a.assignment_title,
-                    deadline: a.assignment_deadline,
-                })),
+            assignments,
         };
+
+        if (user.role === "student") {
+            const totalAssignments = assignments.length;
+
+            const { rows: stats } = await db.query(`
+                SELECT 
+                    COUNT(s.submission_id) AS completed,
+                    COALESCE(AVG(s.score), 0) AS avg_score
+                FROM submissions s
+                JOIN assignments a ON s.assignment_id = a.assignment_id
+                WHERE a.class_id = $1 AND s.student_id = $2
+                `, [classId, user.userid]);
+
+            const completed = parseInt(stats[0].completed, 10);
+            const completeness = totalAssignments > 0
+                ? Math.floor((completed / totalAssignments) * 10000) / 100
+                : 0;
+
+            const avgScore = Math.floor(parseFloat(stats[0].avg_score) * 100) / 100;
+
+            result.completeness = completeness;
+            result.avgScore = avgScore;
+        }
+        else if (user.role === "teacher") {
+            const { rows: memberRows } = await db.query(`
+                SELECT COUNT(*) AS membersCount
+                FROM classMembers
+                WHERE classID = $1
+            `, [classId]);
+
+            result.membersCount = parseInt(memberRows[0].memberscount, 10);
+        }
 
         res.json(result);
     } catch (err) {
@@ -159,13 +191,14 @@ router.get("/:classId", async (req, res) => {
 });
 
 
+
 // GET class members
 router.get("/:classId/members", async (req, res) => {
     const classId = req.params.classId;
     try {
         const { rows } = await db.query(
             `
-      SELECT u.userID as "userId", u.firstName as "firstName", u.lastName as "lastName", u.role as "role"
+      SELECT u.userID as "userId", u.firstName as "firstName", u.lastName as "lastName", u.email as "email"
       FROM classMembers cm
       JOIN users u ON cm.studentID = u.userID
       WHERE cm.classID = $1
@@ -224,12 +257,14 @@ router.post("/:classId/invitations", authenticateJWT(["teacher"]), async (req, r
     try {
         // Find student by email
         const userResult = await db.query(
-            `SELECT userID FROM users WHERE email = $1`,
+            `SELECT userID, role FROM users WHERE email = $1`,
             [studentEmail]
         );
 
         if (userResult.rows.length === 0) {
             return res.status(404).json({ error: "Student not found" });
+        } else if (userResult.rows[0].role !== "student") {
+            return res.status(400).json({ error: "User is not a student" });
         }
 
         const studentId = userResult.rows[0].userid;

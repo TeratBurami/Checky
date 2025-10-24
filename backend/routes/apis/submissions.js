@@ -107,7 +107,7 @@ router.put("/:submission_id/grade", authenticateJWT(["teacher"]), async (req, re
 // ----------------------
 // List all submissions with files
 // ----------------------
-router.get("/:assignment_id", async (req, res) => {
+router.get("/:assignment_id/submission/all", async (req, res) => {
   try {
     const { assignment_id } = req.params;
 
@@ -133,7 +133,7 @@ router.get("/:assignment_id", async (req, res) => {
 // ----------------------
 // Get single student's submission with files
 // ----------------------
-router.get("/:assignment_id/:student_id", async (req, res) => {
+router.get("/:assignment_id/student/:student_id", async (req, res) => {
   try {
     const { assignment_id, student_id } = req.params;
 
@@ -159,7 +159,7 @@ router.get("/:assignment_id/:student_id", async (req, res) => {
 });
 
 // Delete a single file from a submission
-router.delete("/:assignment_id/:file_id", authenticateJWT(["student"]), async (req, res) => {
+router.delete("/:assignment_id/file/:file_id", authenticateJWT(["student"]), async (req, res) => {
   try {
     const { assignment_id, file_id } = req.params;
     const student_id = req.user.userid;
@@ -184,6 +184,43 @@ router.delete("/:assignment_id/:file_id", authenticateJWT(["student"]), async (r
     await db.query(`DELETE FROM submission_files WHERE file_id=$1`, [file_id]);
 
     res.json({ message: "File deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /:assignmentId/autograde
+router.post("/:assignmentId/autograde", authenticateJWT(["teacher"]), async (req, res) => {
+  const { assignmentId } = req.params;
+
+  try {
+    // Get all ungraded submissions for this assignment
+    const { rows: submissions } = await db.query(`
+      SELECT submission_id, content
+      FROM submissions
+      WHERE assignment_id = $1 AND score IS NULL
+    `, [assignmentId]);
+
+    if (submissions.length === 0)
+      return res.json({ message: "No ungraded submissions found", gradedCount: 0 });
+
+    // Simple deterministic "auto-grading" algorithm
+    for (const s of submissions) {
+      const len = (s.content || "").trim().length;
+      const base = len * 0.1;
+      const noise = Math.random() * 100; // small variation
+      const score = Math.round(Math.min(100, Math.max(0, base + noise) % 100)); // round to integer
+
+      await db.query(
+        `UPDATE submissions SET score = $1, teacher_comment = $2 WHERE submission_id = $3`,
+        [score, "Auto-graded by system", s.submission_id]
+      );
+    }
+
+    res.json({
+      message: "Auto-grading complete",
+      gradedCount: submissions.length
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

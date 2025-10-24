@@ -38,3 +38,44 @@ export interface Rubric {
         }>;
     }>;
 }
+
+// export interface RubricCriterionLevel {
+//   levelId: number;
+//   levelName: string;
+//   score: number;
+//   description: string;
+// }
+// export interface RubricCriterion {
+//   criterionId: number;
+//   title: string;
+//   levels: RubricCriterionLevel[];
+// }
+// export interface Rubric {
+//   rubricId: number;
+//   name: string;
+//   criteria: RubricCriterion[];
+// }
+
+export interface Assignment {
+  assignmentId: number;
+  title: string;
+  description: string;
+  deadline: string;
+  createdAt: string;
+  rubric: Rubric;
+  submissions: Submission[];
+}
+
+export interface Submission {
+  submissionId: string;
+  studentInfo: {
+    studentId: string;
+    firstName: string;
+    lastName: string;
+  };
+  content: string;
+  attachment: string[];
+  submittedAt: string;
+  score: number | null;
+  teacherComment: string | null;
+}

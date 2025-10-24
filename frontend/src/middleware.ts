@@ -3,11 +3,22 @@ import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
 const publicRoutes = ['/login', '/register'];
-const commonPrivateRoutes = ['/', '/class', '/notification'];
-const roleSpecificRoutes = {
-  student: ['/peer-review'],
-  teacher: ['/rubric','/class/create'],
-};
+
+const teacherOnlyRoutes = [
+  '/rubric',
+  '/class/create',
+  '/class/edit',
+  '/assignment/create',
+  '/assignment/edit',
+];
+
+const allPrivateRoutes = [
+  '/',
+  '/class',
+  '/notification',
+  '/assignment',
+  '/peer-review',
+];
 
 interface JwtPayload {
   userid: number;
@@ -21,9 +32,8 @@ interface JwtPayload {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
   const token = request.cookies.get('token')?.value;
-  
+
   let userRole: 'student' | 'teacher' | undefined;
   let isLoggedIn = false;
   let tokenIsInvalid = false;
@@ -38,51 +48,50 @@ export async function middleware(request: NextRequest) {
 
       userRole = payload.role;
       isLoggedIn = true;
-
     } catch (e: any) {
       console.warn('Invalid token:', e.message);
       tokenIsInvalid = true;
       isLoggedIn = false;
     }
   }
-  
-  const isPublicRoute = publicRoutes.includes(pathname);
 
+  const isPublicRoute = publicRoutes.includes(pathname);
   let response = NextResponse.next();
 
   if (isLoggedIn && isPublicRoute) {
     response = NextResponse.redirect(new URL('/', request.url));
   }
 
-  if (!isPublicRoute) {
-    if (!isLoggedIn) {
-      response = NextResponse.redirect(new URL('/login', request.url));
+  if (!isPublicRoute && !isLoggedIn && !tokenIsInvalid) {
+    response = NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  if (isLoggedIn && !isPublicRoute) {
+    const isTeacherOnlyPath = teacherOnlyRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
+
+    if (isTeacherOnlyPath) {
+      if (userRole !== 'teacher') {
+        response = NextResponse.redirect(new URL('/', request.url));
+      }
     } else {
-      const isCommonRoute = commonPrivateRoutes.some((route) => {
+
+      const allowedRoutes = [...allPrivateRoutes, ...teacherOnlyRoutes]; 
+      const isAllowedPrivatePath = allowedRoutes.some((route) => {
         if (route === '/') return pathname === route;
         return pathname.startsWith(route);
       });
-
-      if (isCommonRoute) {
-        response = NextResponse.next();
-      } else {
-        const allowedSpecificRoutes = roleSpecificRoutes[userRole!] || []; 
-        const isAllowedSpecific = allowedSpecificRoutes.some((route) =>
-          pathname.startsWith(route)
-        );
-
-        if (isAllowedSpecific) {
-          response = NextResponse.next();
-        } else {
-          response = NextResponse.redirect(new URL('/', request.url));
-        }
+      
+      if (!isAllowedPrivatePath) {
+         response = NextResponse.redirect(new URL('/', request.url));
       }
     }
   }
 
   if (tokenIsInvalid) {
-    if (pathname !== '/login' && pathname !== '/register') {
-         response = NextResponse.redirect(new URL('/login', request.url));
+    if (!isPublicRoute) {
+      response = NextResponse.redirect(new URL('/login', request.url));
     }
     response.cookies.delete('token');
   }
