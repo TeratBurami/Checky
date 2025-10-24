@@ -8,7 +8,12 @@ import cors from "cors";
 dotenv.config();
 const app = express();
 
-app.use(cors());
+const corsOptions = {
+  origin: "http://localhost:3001", 
+  credentials: true, 
+};
+
+app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 app.use(cookieParser());
