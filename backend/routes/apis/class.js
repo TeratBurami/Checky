@@ -122,22 +122,39 @@ router.get("/:classId", authenticateJWT(), async (req, res) => {
             SELECT 
                 c.classID, c.name, c.description, c.classCode,
                 u.userID AS teacher_userId, u.firstName AS teacher_firstName, u.lastName AS teacher_lastName,
-                a.assignment_id, a.title AS assignment_title, a.deadline AS assignment_deadline
+                a.assignment_id, a.title AS assignment_title, a.deadline AS assignment_deadline,
+                s.submission_id, s.score, s.submitted_at
             FROM classes c
             LEFT JOIN users u ON c.teacherID = u.userID
             LEFT JOIN assignments a ON c.classID = a.class_id
+            LEFT JOIN submissions s ON a.assignment_id = s.assignment_id AND s.student_id = $2
             WHERE c.classID = $1
             ORDER BY a.created_at ASC
-        `, [classId]);
+        `, [classId, user.userid]);
 
         if (rows.length === 0) return res.status(404).json({ error: "Class not found" });
 
         const first = rows[0];
-        const assignments = rows.filter(r => r.assignment_id).map(a => ({
-            assignmentId: a.assignment_id,
-            title: a.assignment_title,
-            deadline: a.assignment_deadline,
-        }));
+
+        const now = new Date();
+        const assignments = rows.filter(r => r.assignment_id).map(a => {
+            let status;
+
+            if (a.submission_id) {
+                status = a.score !== null ? "GRADED" : "SUBMITTED";
+            } else if (a.assignment_deadline && new Date(a.assignment_deadline) < now) {
+                status = "OVERDUE";
+            } else {
+                status = "MISSING";
+            }
+
+            return {
+                assignmentId: a.assignment_id,
+                title: a.assignment_title,
+                deadline: a.assignment_deadline,
+                status,
+            };
+        });
 
         const result = {
             classId: first.classid,
@@ -162,7 +179,7 @@ router.get("/:classId", authenticateJWT(), async (req, res) => {
                 FROM submissions s
                 JOIN assignments a ON s.assignment_id = a.assignment_id
                 WHERE a.class_id = $1 AND s.student_id = $2
-                `, [classId, user.userid]);
+            `, [classId, user.userid]);
 
             const completed = parseInt(stats[0].completed, 10);
             const completeness = totalAssignments > 0
@@ -173,8 +190,7 @@ router.get("/:classId", authenticateJWT(), async (req, res) => {
 
             result.completeness = completeness;
             result.avgScore = avgScore;
-        }
-        else if (user.role === "teacher") {
+        } else if (user.role === "teacher") {
             const { rows: memberRows } = await db.query(`
                 SELECT COUNT(*) AS membersCount
                 FROM classMembers
