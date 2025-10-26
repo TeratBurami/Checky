@@ -195,7 +195,7 @@ router.get("/:classId/assignment/:assignmentId", authenticateJWT(['student', 'te
   const { role, userid } = req.user;
 
   try {
-    // 1. Base assignment info
+    // 1. Base assignment info (include deadline)
     const { rows: assignmentRows } = await db.query(
       `SELECT 
           a.assignment_id AS "assignmentId",
@@ -218,7 +218,7 @@ router.get("/:classId/assignment/:assignmentId", authenticateJWT(['student', 'te
 
     // ---------- STUDENT ----------
     if (role === 'student') {
-      // Rubric info with criteria + levels
+      // Rubric info
       const rubricRes = await db.query(
         `SELECT r.rubric_id AS "rubricId", r.name,
           json_agg(
