@@ -190,11 +190,12 @@ router.put("/:review_id", authenticateJWT("student"), async (req, res) => {
     }
 });
 
-// GET: Get full peer review details by review_id
+// GET: Full peer review details including class, assignment, submission, users, and rubric
 router.get("/:review_id", authenticateJWT(["student", "teacher"]), async (req, res) => {
   const { review_id } = req.params;
 
   try {
+    // Base info join
     const { rows } = await db.query(
       `
       SELECT 
@@ -222,13 +223,28 @@ router.get("/:review_id", authenticateJWT(["student", "teacher"]), async (req, r
           'role', student.role
         ) AS student,
 
+        -- Class info
+        json_build_object(
+          'classId', c.classID,
+          'name', c.name,
+          'description', c.description,
+          'classCode', c.classCode,
+          'teacher', json_build_object(
+            'userId', teacher.userID,
+            'firstName', teacher.firstName,
+            'lastName', teacher.lastName,
+            'email', teacher.email
+          )
+        ) AS class,
+
         -- Assignment info
         json_build_object(
           'assignmentId', a.assignment_id,
           'title', a.title,
           'description', a.description,
           'deadline', a.deadline,
-          'createdAt', a.created_at
+          'createdAt', a.created_at,
+          'rubricId', a.rubric_id
         ) AS assignment,
 
         -- Submission info
@@ -248,21 +264,62 @@ router.get("/:review_id", authenticateJWT(["student", "teacher"]), async (req, r
       FROM peer_reviews pr
       JOIN submissions s ON pr.submission_id = s.submission_id
       JOIN assignments a ON s.assignment_id = a.assignment_id
+      JOIN classes c ON a.class_id = c.classID
+      JOIN users teacher ON c.teacherID = teacher.userID
       JOIN users reviewer ON pr.reviewer_id = reviewer.userID
       JOIN users student ON s.student_id = student.userID
       LEFT JOIN submission_files f ON f.submission_id = s.submission_id
       WHERE pr.review_id = $1
-      GROUP BY pr.review_id, reviewer.userID, student.userID, a.assignment_id, s.submission_id
+      GROUP BY pr.review_id, reviewer.userID, student.userID, a.assignment_id, s.submission_id, c.classID, teacher.userID
       `,
       [review_id]
     );
 
-    if (rows.length === 0)
-      return res.status(404).json({ error: "Peer review not found" });
+    if (!rows.length) return res.status(404).json({ error: "Peer review not found" });
+    const base = rows[0];
 
-    res.json(rows[0]);
+    // Fetch rubric if the assignment has one
+    let rubric = null;
+    const rubricId = base.assignment.rubricId;
+
+    if (rubricId) {
+      const { rows: rubricRows } = await db.query(
+        `
+        SELECT 
+          r.rubric_id AS "rubricId",
+          r.name,
+          json_agg(
+            json_build_object(
+              'criterionId', c.criterion_id,
+              'title', c.title,
+              'levels', (
+                SELECT json_agg(
+                  json_build_object(
+                    'levelId', l.level_id,
+                    'levelName', l.level_name,
+                    'score', l.score,
+                    'description', l.description
+                  )
+                )
+                FROM rubric_levels l
+                WHERE l.criterion_id = c.criterion_id
+              )
+            )
+          ) AS criteria
+        FROM rubrics r
+        JOIN rubric_criteria c ON r.rubric_id = c.rubric_id
+        WHERE r.rubric_id = $1
+        GROUP BY r.rubric_id, r.name
+        `,
+        [rubricId]
+      );
+      rubric = rubricRows[0] || null;
+    }
+
+    base.assignment.rubric = rubric;
+    res.json(base);
   } catch (err) {
-    console.error("Error fetching peer review details:", err.message);
+    console.error("Error fetching full peer review details:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
