@@ -136,16 +136,16 @@ INSERT INTO submissions (assignment_id, student_id, content, submitted_at) VALUE
 INSERT INTO peer_reviews (submission_id, reviewer_id, comments, status, review_deadline, created_at) VALUES
 -- --- Reviews of Jane's Submissions (for other users) ---
 (2, 1, NULL, 'PENDING', '2025-11-01 23:59:59', NOW() - INTERVAL '7 days'), -- Review 1: John (1) needs to review Jane (2)
-(1, 5, 'Sandy found Jane''s source selection strong, but suggested focusing the introduction.', 'COMPLETED', '2025-10-18 23:59:59', NOW() - INTERVAL '8 days'), -- Review 3: Sandy (5) reviewed Jane (2)
+(1, 5, '[High, Medium] Sandy found Jane''s source selection strong, but suggested focusing the introduction.', 'COMPLETED', '2025-10-18 23:59:59', NOW() - INTERVAL '8 days'),
 
 -- --- COMPLETED Reviews by Jane Doe (userID 2) (6 Total) ---
-(3, 2, 'Excellent structure and flow! I only found one minor typo. Strong start.', 'COMPLETED', '2025-10-25 00:00:00', NOW() - INTERVAL '2 days'), -- Review 2 (Existing one, updated deadline to be in the past)
-(9, 2, 'Sandy successfully addressed the prompt, but needs to work on integrating direct quotes smoothly (Criterion 1).', 'COMPLETED', '2025-10-20 23:59:59', NOW() - INTERVAL '5 days'), -- Review 9 (Completed 1)
-(10, 2, 'John''s annotations are detailed, though the structure needs refinement to follow the class guide (Criterion 2).', 'COMPLETED', '2025-10-21 23:59:59', NOW() - INTERVAL '4 days'), -- Review 10 (Completed 2)
-(11, 2, 'Very comprehensive review of primary sources. All citations look perfectly formatted (Criterion 4).', 'COMPLETED', '2025-10-22 23:59:59', NOW() - INTERVAL '3 days'), -- Review 11 (Completed 3)
-(12, 2, 'Sandy''s synthesis is insightful. Needs stronger transitions between historical periods, check rubric for structure scoring.', 'COMPLETED', '2025-10-23 23:59:59', NOW() - INTERVAL '2 days'), -- Review 12 (Completed 4)
-(13, 2, 'John has a solid critique of the methodology. Focus on deepening the research depth analysis (Criterion 3).', 'COMPLETED', '2025-10-24 23:59:59', NOW() - INTERVAL '1 day'), -- Review 13 (Completed 5)
-(8, 2, 'Good flow, but remember to submit the final draft version, not the outline!', 'COMPLETED', '2025-10-24 12:00:00', NOW() - INTERVAL '1 day'), -- Review 14 (Completed 6)
+(3, 2, '[High, Medium] Excellent structure and flow! I only found one minor typo. Strong start.', 'COMPLETED', '2025-10-25 00:00:00', NOW() - INTERVAL '2 days'),
+(9, 2, '[High, Low] Sandy successfully addressed the prompt, but needs to work on integrating direct quotes smoothly (Criterion 1).', 'COMPLETED', '2025-10-20 23:59:59', NOW() - INTERVAL '5 days'),
+(10, 2, '[Medium, Medium] John''s annotations are detailed, though the structure needs refinement to follow the class guide (Criterion 2).', 'COMPLETED', '2025-10-21 23:59:59', NOW() - INTERVAL '4 days'),
+(11, 2, '[High, High] Very comprehensive review of primary sources. All citations look perfectly formatted (Criterion 4).', 'COMPLETED', '2025-10-22 23:59:59', NOW() - INTERVAL '3 days'),
+(12, 2, '[Medium, High] Sandy''s synthesis is insightful. Needs stronger transitions between historical periods, check rubric for structure scoring.', 'COMPLETED', '2025-10-23 23:59:59', NOW() - INTERVAL '2 days'),
+(13, 2, '[High, Medium] John has a solid critique of the methodology. Focus on deepening the research depth analysis (Criterion 3).', 'COMPLETED', '2025-10-24 23:59:59', NOW() - INTERVAL '1 day'),
+(8, 2, '[Medium, Low] Good flow, but remember to submit the final draft version, not the outline!', 'COMPLETED', '2025-10-24 12:00:00', NOW() - INTERVAL '1 day'),
 
 -- --- PENDING Reviews by Jane Doe (userID 2) (5 Total) ---
 (4, 2, NULL, 'PENDING', '2025-11-01 23:59:59', NOW() - INTERVAL '1 hour'), -- Review 4 (Pending 1: John's A5)
