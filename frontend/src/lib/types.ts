@@ -66,6 +66,21 @@ export interface Assignment {
   submissions: Submission[];
 }
 
+type ReviewStatus = 'PENDING' | 'COMPLETED';
+
+
+export interface ReviewAssignment {
+  reviewId: number;
+  submissionId: number;
+  reviewerId: number;
+  comments: string;
+  status: "PENDING" | "COMPLETED";
+  reviewDeadline: string;
+  createdAt: string;
+  assignmentTitle?: string;
+  className?: string;
+}
+
 export interface Submission {
   submissionId: string;
   studentInfo: {
