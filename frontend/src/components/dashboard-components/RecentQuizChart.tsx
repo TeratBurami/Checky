@@ -1,4 +1,3 @@
-// RecentQuizzesChart.tsx
 import React, { FC } from 'react'; // 1. Import FC (Functional Component)
 import {
   BarChart,
@@ -11,14 +10,12 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-// 2. สร้าง Interface สำหรับข้อมูลของเรา
 interface QuizData {
   month: string;
   score: number;
   mean: number;
 }
 
-// 3. กำหนด Type ให้กับข้อมูลตัวอย่าง
 const data: QuizData[] = [
   { month: 'Jan', score: 36, mean: 68 },
   { month: 'Feb', score: 21, mean: 41 },
@@ -27,20 +24,17 @@ const data: QuizData[] = [
   { month: 'May', score: 15, mean: 24 }
 ];
 
-// 4. สร้าง Interface สำหรับ Props ของ CustomTooltip
-// นี่คือ Type ที่ Recharts ส่งมาให้ Tooltip
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{
-    payload: QuizData; // เราบอกว่า payload ข้างในคือข้อมูล QuizData ของเรา
-    [key: string]: any; // เผื่อ properties อื่นๆ ที่ Recharts ส่งมา
+    payload: QuizData;
+    [key: string]: any;
   }>;
 }
 
-// 5. กำหนด Type ให้ CustomTooltip (ใช้ FC และ Props ที่เราสร้าง)
 const CustomTooltip: FC<CustomTooltipProps> = ({ active, payload }) => {
   if (active && payload && payload.length) {
-    const data = payload[0].payload; // TypeScript รู้ทันทีว่า 'data' คือ QuizData
+    const data = payload[0].payload;
     return (
       <div className="bg-[#3A3A5A] text-white p-3 rounded-md shadow-lg">
         <div className="flex items-center mb-1">
@@ -57,7 +51,6 @@ const CustomTooltip: FC<CustomTooltipProps> = ({ active, payload }) => {
   return null;
 };
 
-// 6. กำหนด Type ให้ CustomLegend (อันนี้ไม่ได้รับ props เลยใช้ FC ธรรมดา)
 const CustomLegend: FC = () => {
   return (
     <div className="flex items-center justify-start space-x-4 mb-12 mt-2">
@@ -73,7 +66,6 @@ const CustomLegend: FC = () => {
   );
 };
 
-// 7. กำหนด Type ให้คอมโพเนนต์หลัก
 const RecentQuizzesChart: FC = () => {
   return (
     <ResponsiveContainer width="100%" height={300}>

@@ -244,30 +244,52 @@ router.get("/:classId/assignment/:assignmentId", authenticateJWT(['student', 'te
 
       const rubric = rubricRes.rows[0] || null;
 
-      // Student submission
+      // (อัปเดต) Student submission (เปลี่ยนมาใช้ CTEs เพื่อความถูกต้องของข้อมูล)
       const submissionRes = await db.query(
-        `SELECT s.submission_id AS "submissionId",
-                s.content,
-                COALESCE(json_agg(json_build_object('filename', f.filename, 'url', f.url))
-                  FILTER (WHERE f.file_id IS NOT NULL), '[]'::json) AS "attachment",
-                s.submitted_at AS "submittedAt",
-                s.score,
-                s.teacher_comment AS "teacherComment",
-                COALESCE(
-                  json_agg(
-                    json_build_object(
-                      'reviewerName', concat(u.firstname, ' ', u.lastname),
-                      'comment', pr.comments
-                    )
-                  ) FILTER (WHERE pr.review_id IS NOT NULL),
-                  '[]'::json
-                ) AS "peerReviewsReceived"
-         FROM submissions s
-         LEFT JOIN submission_files f ON f.submission_id = s.submission_id
-         LEFT JOIN peer_reviews pr ON s.submission_id = pr.submission_id
-         LEFT JOIN users u ON pr.reviewer_id = u.userid
-         WHERE s.assignment_id = $1 AND s.student_id = $2
-         GROUP BY s.submission_id`,
+        `WITH AggregatedFiles AS (
+            -- 1. รวมไฟล์ทั้งหมดของ submission นี้ก่อน (และเพิ่ม file_id)
+            SELECT 
+                submission_id,
+                json_agg(json_build_object(
+                    'file_id', file_id,
+                    'filename', filename, 
+                    'url', url
+                )) AS attachment
+            FROM submission_files
+            WHERE submission_id IN (
+                SELECT submission_id FROM submissions 
+                WHERE assignment_id = $1 AND student_id = $2
+            )
+            GROUP BY submission_id
+        ), AggregatedReviews AS (
+            -- 2. รวมรีวิวทั้งหมดของ submission นี้
+            SELECT
+                pr.submission_id,
+                json_agg(json_build_object(
+                    'reviewerName', concat(u.firstname, ' ', u.lastname),
+                    'comment', pr.comments
+                )) FILTER (WHERE pr.review_id IS NOT NULL) AS "peerReviewsReceived"
+            FROM peer_reviews pr
+            JOIN users u ON pr.reviewer_id = u.userid
+            WHERE pr.submission_id IN (
+                SELECT submission_id FROM submissions 
+                WHERE assignment_id = $1 AND student_id = $2
+            )
+            GROUP BY pr.submission_id
+        )
+        -- 3. ตอนนี้ค่อย JOIN ทุกอย่างเข้าด้วยกัน
+        SELECT 
+            s.submission_id AS "submissionId",
+            s.content,
+            COALESCE(f.attachment, '[]'::json) AS "attachment",
+            s.submitted_at AS "submittedAt",
+            s.score,
+            s.teacher_comment AS "teacherComment",
+            COALESCE(r."peerReviewsReceived", '[]'::json) AS "peerReviewsReceived"
+        FROM submissions s
+        LEFT JOIN AggregatedFiles f ON s.submission_id = f.submission_id
+        LEFT JOIN AggregatedReviews r ON s.submission_id = r.submission_id
+        WHERE s.assignment_id = $1 AND s.student_id = $2`,
         [assignmentId, userid]
       );
 
@@ -286,8 +308,15 @@ router.get("/:classId/assignment/:assignmentId", authenticateJWT(['student', 'te
                   'lastName', u.lastname
                 ) AS "studentInfo",
                 s.content,
-                COALESCE(json_agg(json_build_object('filename', f.filename, 'url', f.url))
+                
+                -- (อัปเดต) เพิ่ม 'file_id' ตรงนี้
+                COALESCE(json_agg(json_build_object(
+                  'file_id', f.file_id, 
+                  'filename', f.filename, 
+                  'url', f.url
+                ))
                   FILTER (WHERE f.file_id IS NOT NULL), '[]'::json) AS "attachment",
+
                 s.submitted_at AS "submittedAt",
                 s.score,
                 s.teacher_comment AS "teacherComment"

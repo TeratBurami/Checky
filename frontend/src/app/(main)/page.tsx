@@ -67,7 +67,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex flex-col justify-between gap-2 shadow bg-white rounded-xl w-[30%] p-4">
-          <p className="font-bold text-lg">Recent Quizzes</p>
+          <p className="font-bold text-lg">Performance</p>
           <div className="flex items-center border border-gray-200 rounded-lg w-full p-2 h-full">
             <PerformanceGrade></PerformanceGrade>
           </div>
