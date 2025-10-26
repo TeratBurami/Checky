@@ -1,0 +1,81 @@
+-- ------------------------------
+-- PostgreSQL Seed Data for Checky
+-- ------------------------------
+
+-- Users
+INSERT INTO users (firstName, lastName, email, password, role) VALUES
+('John', 'Doe', 'johndoe@gmail.com', '$2b$10$sAfXqrjv9SbhsFyXJjxn/upbIhgaayLG0ah32hPbdRzFCMHBvBEhO', 'student'),
+('Jane', 'Doe', 'reze@gmail.com', '$2b$10$g6AgrHKhUBaRy.LmSMcNDOcYeIbev2JhTDcTLX/RPnpFIQi9lONIS', 'student'),
+('Alan', 'Turing', 'alan@gmail.com', '$2b$10$F1s3hKOffwX7vx4WcPi1JeSQTB0NFYWX8ndwCAHwC.GuE3K.HnQeG', 'teacher'),
+('Thanapon', 'Noraset', 'nornor@gmail.com', '$2b$10$90ibmo1JTuZViT3GWKHUcuvrmmJ90EJpdTbzL80QIOhy56HKMCpJe', 'teacher'),
+('Sandy', 'Daisy', 'sandy@gmail.com', '$2b$10$ycB8iU66PW0zQgZBpNRHHOba.Afy6KFKtoZa1QA7NG42aIzBQDa0G', 'student'),
+('Sandy', 'Daisy', 'daisy@gmail.com', '$2b$10$lupauJAu8HxUrxfp.3mKQOpreHM603kSWfpgtPhMIGXLkYdJhBW16', 'teacher');
+
+-- Classes
+INSERT INTO classes (name, description, classCode, teacherID) VALUES
+('Introduction to Literature', 'Exploration of literary themes, genres, and critical approaches', 'LIT101', 3),
+('Advanced Academic Writing', 'Deep dive into academic writing and research methodologies', 'ENG201', 3),
+('Historical Investigation Fundamentals', 'Introduction to historical research methods and sources', 'HIS101', 4),
+('Religious Studies 101', 'Introduction to major world religions and their impacts on society', 'REL101', 4),
+('Suffering Engineering', 'Be more waterfall and crush all customer.', 'SUFSD666', 6);
+
+-- Class Members
+INSERT INTO classMembers (classID, studentID) VALUES
+(1, 1),
+(1, 2),
+(2, 1),
+(3, 2),
+(5, 5);
+
+-- Rubrics
+INSERT INTO rubrics (name, teacherID) VALUES
+('Writing Rubric', 3),
+('Research Rubric', 4);
+
+-- Rubric Criteria
+INSERT INTO rubric_criteria (rubric_id, title) VALUES
+(1, 'Correctness'),
+(1, 'Structure'),
+(2, 'Research Depth'),
+(2, 'Citation Quality');
+
+-- Rubric Levels
+INSERT INTO rubric_levels (criterion_id, level_name, score, description) VALUES
+-- Writing Rubric: Correctness
+(1, 'High', 10, 'Perfect writing with no grammar mistakes'),
+(1, 'Medium', 5, 'Few grammar mistakes (1-3)'),
+(1, 'Low', 2, 'Many grammar mistakes (>5)'),
+
+-- Writing Rubric: Structure
+(2, 'High', 10, 'Clear structure with introduction, body, conclusion'),
+(2, 'Medium', 6, 'Some structure, but transitions weak'),
+(2, 'Low', 3, 'Poorly organized'),
+
+-- Research Rubric: Research Depth
+(3, 'High', 10, 'Excellent use of diverse sources'),
+(3, 'Medium', 6, 'Moderate use of sources'),
+(3, 'Low', 3, 'Limited or no sources'),
+
+-- Research Rubric: Citation Quality
+(4, 'High', 10, 'Perfect APA citations'),
+(4, 'Medium', 7, 'Minor citation errors'),
+(4, 'Low', 3, 'Incorrect or missing citations');
+
+-- Assignments
+INSERT INTO assignments (class_id, title, description, deadline, rubric_id) VALUES
+(1, 'Essay on Modern Poetry', 'Write a 500-word essay analyzing a modern poem.', '2025-11-15 23:59:59', 1),
+(2, 'Final Project Proposal', 'Submit a one-page proposal for your final project.', '2025-12-01 23:59:59', 1),
+(3, 'Historical Sources Review', 'Analyze three primary sources from the 18th century.', '2025-10-30 23:59:59', 2),
+(4, 'Religion Reflection Paper', 'Reflect on a major world religion and its social impact.', '2025-11-05 23:59:59', 2);
+
+-- Notifications
+INSERT INTO notifications (user_id, type, message, link, is_read, created_at) VALUES
+(1, 'NEW_ASSIGNMENT', 'A new assignment "Lab 1: Linked Lists" has been posted in Data Structures & Algorithms.', '/class/1/assignments/1', FALSE, NOW() - INTERVAL '3 days'),
+(2, 'PEER_REVIEW_ASSIGNED', 'You have been assigned to review a peer submission for "Lab 1: Linked Lists".', '/class/1/assignments/1/review', FALSE, NOW() - INTERVAL '2 days'),
+(3, 'NEW_COMMENT', 'Your instructor commented on your submission for "Lab 1: Linked Lists".', '/class/1/assignments/1/submission', TRUE, NOW() - INTERVAL '1 day'),
+(1, 'GRADE_RELEASED', 'Grades have been released for "Lab 1: Linked Lists". Check your score now.', '/class/1/assignments/1/grade', TRUE, NOW() - INTERVAL '12 hours'),
+(4, 'NEW_ASSIGNMENT', 'A new assignment "Midterm Project Proposal" has been posted in Data Structures & Algorithms.', '/class/1/assignments/3', FALSE, NOW() - INTERVAL '6 hours'),
+(5, 'PEER_REVIEW_ASSIGNED', 'You have been assigned to review a submission for "Midterm Project Proposal".', '/class/1/assignments/3/review', FALSE, NOW() - INTERVAL '2 hours'),
+(2, 'NEW_COMMENT', 'A classmate replied to your comment in "Lab 2: Binary Search Trees".', '/class/1/discussions/2', FALSE, NOW() - INTERVAL '1 hour'),
+(3, 'GRADE_RELEASED', 'Your grade for "Lab 2: Binary Search Trees" is now available.', '/class/1/assignments/2/grade', FALSE, NOW() - INTERVAL '30 minutes');
+
