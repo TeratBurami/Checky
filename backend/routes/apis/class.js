@@ -5,7 +5,7 @@ import { authenticateJWT } from "../../middleware/auth.js";
 const router = Router();
 
 // GET all classes
-router.get("/", async (req, res) => {
+router.get("/admin/all/classes", async (req, res) => {
     try {
         const { rows } = await db.query(
             `
@@ -22,6 +22,52 @@ router.get("/", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// GET classes for current user
+router.get("/", authenticateJWT(), async (req, res) => {
+  try {
+    const user = req.user;
+    let query, params;
+
+    if (user.role === "teacher") {
+      query = `
+        SELECT c.classID AS "classId", c.name, c.description, 
+               CONCAT(u.firstName, ' ', u.lastName) AS teacher,
+               COUNT(cm)::int AS "memberCount"
+        FROM classes c
+        LEFT JOIN users u ON c.teacherID = u.userID
+        LEFT JOIN classMembers cm ON c.classID = cm.classID
+        WHERE c.teacherID = $1
+        GROUP BY c.classID, u.firstName, u.lastName
+        ORDER BY c.classID ASC;
+      `;
+      params = [user.userid];
+    } else if (user.role === "student") {
+      query = `
+        SELECT c.classID AS "classId", c.name, c.description, 
+               CONCAT(u.firstName, ' ', u.lastName) AS teacher,
+               COUNT(cm)::int AS "memberCount"
+        FROM classes c
+        LEFT JOIN users u ON c.teacherID = u.userID
+        LEFT JOIN classMembers cm ON c.classID = cm.classID
+        WHERE c.classID IN (
+          SELECT classID FROM classMembers WHERE studentID = $1
+        )
+        GROUP BY c.classID, u.firstName, u.lastName
+        ORDER BY c.classID ASC;
+      `;
+      params = [user.userid];
+    } else {
+      return res.status(403).json({ error: "Unauthorized role" });
+    }
+
+    const { rows } = await db.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // POST create a new class (stuck at non-null constraint error from db)
 router.post("/", authenticateJWT(['teacher']), async (req, res) => {
@@ -206,8 +252,6 @@ router.get("/:classId", authenticateJWT(), async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
-
 
 // GET class members
 router.get("/:classId/members", async (req, res) => {
