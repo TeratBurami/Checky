@@ -1,8 +1,6 @@
-// PerformanceGrade.tsx
 import React, { FC } from 'react';
 import ReactSpeedometer, { Transition } from 'react-d3-speedometer'; 
 
-// ไอคอน Chevron (ลูกศรลง) สำหรับ Dropdown
 const ChevronDownIcon: FC = () => (
   <svg 
     width="16" 

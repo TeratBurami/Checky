@@ -3,7 +3,7 @@ export interface JwtPayload {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'student' | 'teacher';
+  role: "student" | "teacher";
   iat: number;
   exp: number;
 }
@@ -16,70 +16,49 @@ export interface Course {
   memberCount: number;
 }
 
-export interface Member{
-    userId:number;
-    firstName:string;
-    lastName:string;
-    role:string;
+export interface Member {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  role: string;
 }
 
 export interface Rubric {
-    rubricId: number;
-    name: string;
-    created_at: string;
-    criteria: Array<{
-        criterionId: number;
-        title: string;
-        levels: Array<{
-            levelId: number;
-            level: string;
-            score: number;
-            description: string;
-        }>;
+  rubricId: number;
+  name: string;
+  created_at: string;
+  criteria: Array<{
+    criterionId: number;
+    title: string;
+    levels: Array<{
+      levelId: number;
+      level: string;
+      score: number;
+      description: string;
     }>;
+  }>;
 }
 
-// export interface RubricCriterionLevel {
-//   levelId: number;
-//   levelName: string;
-//   score: number;
-//   description: string;
-// }
-// export interface RubricCriterion {
-//   criterionId: number;
-//   title: string;
-//   levels: RubricCriterionLevel[];
-// }
-// export interface Rubric {
-//   rubricId: number;
-//   name: string;
-//   criteria: RubricCriterion[];
-// }
-
-
-// (ปรับปรุง) ใช้ TeacherAttachmentFile ด้านล่างแทน
 export interface SubmissionFile {
-  file_id: number; // ID สำหรับลบ
+  file_id: number;
   filename: string;
-  url: string; // URL สำหรับดาวน์โหลด
+  url: string;
 }
 
-// (ใหม่) Interface นี้ตรงกับ JSON ที่คุณได้สำหรับ 'attachment'
 export interface TeacherAttachmentFile {
   file_id: number;
   filename: string;
-  url: string; // ใน API response ของคุณ นี่คือ ID ของไฟล์
+  url: string;
 }
 
-// (ปรับปรุง) แก้ไขให้ตรงกับ JSON response ที่คุณได้รับ
 export interface MySubmission {
-  submissionId: number; // แก้ไข: submission_id -> submissionId (number)
-  submittedAt: string; // แก้ไข: submitted_at -> submittedAt
+  submissionId: number;
+  submittedAt: string;
   score: number | null;
   content: string | null;
-  attachment: TeacherAttachmentFile[]; // แก้ไข: files -> attachment
-  teacherComment: string | null; // (เพิ่ม)
-  peerReviewsReceived: any[]; // (เพิ่ม)
+  attachment: TeacherAttachmentFile[];
+  teacherComment: string | null;
+  peerReviewsReceived: any[];
 }
 
 export interface Assignment {
@@ -93,8 +72,7 @@ export interface Assignment {
   submissions?: Submission[];
 }
 
-type ReviewStatus = 'PENDING' | 'COMPLETED';
-
+type ReviewStatus = "PENDING" | "COMPLETED";
 
 export interface ReviewAssignment {
   reviewId: number;
@@ -116,7 +94,7 @@ export interface Submission {
     lastName: string;
   };
   content: string | null;
-  attachment: TeacherAttachmentFile[]; // (ใช้ซ้ำ)
+  attachment: TeacherAttachmentFile[];
   submittedAt: string;
   score: number | null;
   teacherComment: string | null;

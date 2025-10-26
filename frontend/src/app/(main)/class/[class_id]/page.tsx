@@ -6,7 +6,6 @@ import Cookies from "js-cookie";
 import { FaCircleCheck, FaUserCheck, FaStar, FaRegClock, FaPencil, FaTrash, FaTriangleExclamation } from "react-icons/fa6";
 import { jwtDecode } from "jwt-decode";
 import {JwtPayload} from '@/lib/types'
-import { p } from "framer-motion/client";
 
 
 interface CourseDetail {
@@ -20,6 +19,9 @@ interface CourseDetail {
     lastName: string;
   };
   assignments: any[];
+  completeness: number;
+  avgScore: number;
+  membersCount: number;
 }
 
 
@@ -139,7 +141,7 @@ export default function ClassDetail() {
     {
       title: "Members",
       icon: <FaUserCheck className="text-3xl"></FaUserCheck>,
-      value: "2",
+      value: course?.membersCount,
       href: `/class/${classId}/member`,
     },
   ];
@@ -148,12 +150,12 @@ export default function ClassDetail() {
     {
       title: "Completed",
       icon: <FaCircleCheck className="text-3xl"></FaCircleCheck>,
-      value: "50%",
+      value: course?.completeness,
     },
     {
       title: "Average Score",
       icon: <FaStar className="text-3xl"></FaStar>,
-      value: "78.5",
+      value: course?.avgScore,
     },
   ];
 
@@ -234,61 +236,83 @@ export default function ClassDetail() {
           {role === "teacher" && <button onClick={handleAssignmentCreateClick} className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-4 cursor-pointer">Create Assignment</button>}
         </div>
 
-        {course.assignments.map((assignment) => (
-          <div
-            key={assignment.assignmentId}
-            className="flex justify-between items-center bg-white p-4 rounded shadow my-4" 
-          >
-            <div
-              className="flex-grow cursor-pointer"
-              onClick={() => handleAssignmentClick(assignment.assignmentId)}
-            >
-              <div className="flex items-center gap-8">
-                <FaCircleCheck className={`text-2xl ${assignment.status==="GRADED"? "text-green-500": ""}`}></FaCircleCheck>
-                <h1 className={`text-lg ${assignment.status==="GRADED"? "text-green-500": ""}`}>{assignment.title}</h1>
-              </div>
-              <div className="flex gap-8 mt-4 items-center border-t border-gray-200 pt-2 w-2/3">
-                <div className="flex items-center">
-                  <FaRegClock className="text-gray-500"></FaRegClock>
-                  <p className="ml-2 text-gray-500">
-                    Opened: {new Date(assignment.openDate).toLocaleString()}
-                  </p>
-                </div>
-                <p className="ml-2 text-red-500">
-                  Due: {new Date(assignment.deadline).toLocaleString()}
-                </p>
-              </div>
-            </div>
+        {course.assignments.map((assignment) => {
+  
+  const statusColorMap = {
+    GRADED: "text-green-500",
+    SUBMITTED: "text-blue-500",
+    OVERDUE: "text-red-500",
+    MISSING: "text-gray-500",
+  };
 
-            {role === "student" && assignment.status === "GRADED" &&(
-              <p className="text-green-500 text-xl font-bold">Graded</p>
-            )}
+  type AssignmentStatus = keyof typeof statusColorMap;
 
-            {role === "teacher" && (
-              <div className="flex gap-4 pl-4">
-                {" "}
-                <button
-                  onClick={(e) =>
-                    handleAssignmentEditClick(e, assignment.assignmentId)
-                  }
-                  className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-orange-100 hover:text-orange-600 transition-colors"
-                  title="Edit Assignment"
-                >
-                  <FaPencil className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={(e) =>
-                    handleAssignmentDeleteClick(e, assignment.assignmentId)
-                  }
-                  className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-colors"
-                  title="Delete Assignment"
-                >
-                  <FaTrash className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+  const colorClass = statusColorMap[(assignment.status as AssignmentStatus)] || "text-gray-400";
+  
+  const statusText = assignment.status
+    ? assignment.status.charAt(0) + assignment.status.slice(1).toLowerCase()
+    : "Pending";
+
+  return (
+    <div
+      key={assignment.assignmentId}
+      className="flex justify-between items-center bg-white p-4 rounded shadow my-4"
+    >
+      <div
+        className="flex-grow cursor-pointer"
+        onClick={() => handleAssignmentClick(assignment.assignmentId)}
+      >
+        <div className="flex items-center gap-8">
+          <FaCircleCheck className={`text-2xl ${colorClass}`} />
+          <h1 className={`text-lg ${colorClass}`}>
+            {assignment.title}
+          </h1>
+        </div>
+        <div className="flex gap-8 mt-4 items-center border-t border-gray-200 pt-2 w-2/3">
+          <div className="flex items-center">
+            <FaRegClock className="text-gray-500"></FaRegClock>
+            <p className="ml-2 text-gray-500">
+              Opened: {new Date(assignment.openDate).toLocaleString()}
+            </p>
           </div>
-        ))}
+          <p className="ml-2 text-red-500">
+            Due: {new Date(assignment.deadline).toLocaleString()}
+          </p>
+        </div>
+      </div>
+
+      {role === "student" && assignment.status && (
+        <p className={`text-xl font-bold ${colorClass}`}>
+          {statusText}
+        </p>
+      )}
+
+      {role === "teacher" && (
+        <div className="flex gap-4 pl-4">
+          {" "}
+          <button
+            onClick={(e) =>
+              handleAssignmentEditClick(e, assignment.assignmentId)
+            }
+            className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-orange-100 hover:text-orange-600 transition-colors"
+            title="Edit Assignment"
+          >
+            <FaPencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) =>
+              handleAssignmentDeleteClick(e, assignment.assignmentId)
+            }
+            className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-colors"
+            title="Delete Assignment"
+          >
+            <FaTrash className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+})}
       </div>
 
       {showDeleteModal && (

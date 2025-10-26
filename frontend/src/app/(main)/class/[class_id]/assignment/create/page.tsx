@@ -2,9 +2,7 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { RubricBrief } from "@/lib/types"; // (ใหม่)
-
-// Icons
+import { RubricBrief } from "@/lib/types";
 import {
   FaPen,
   FaCalendarAlt,
@@ -12,31 +10,18 @@ import {
   FaSpinner,
   FaCheckCircle,
 } from "react-icons/fa";
-
 import { FaFileLines, FaListCheck } from "react-icons/fa6";
-
-// Date Picker
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css"; // Import CSS
-
-// Animation
+import "react-datepicker/dist/react-datepicker.css";
 import { motion, AnimatePresence } from "framer-motion";
-
-// --- Type สำหรับ Rubric ที่ดึงมา ---
-// (หากคุณไม่ได้เพิ่มใน lib/types.ts ก็ใช้อันนี้แทนได้)
-// interface RubricBrief {
-//   rubric_id: number;
-//   name: string;
-// }
 
 export default function AssignmentCreate() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState<Date | null>(new Date());
-  const [rubricId, setRubricId] = useState(""); // ใช้ string สำหรับ <select>
+  const [rubricId, setRubricId] = useState("");
   const [rubrics, setRubrics] = useState<RubricBrief[]>([]);
 
-  // UI State
   const [loadingRubrics, setLoadingRubrics] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,17 +29,16 @@ export default function AssignmentCreate() {
 
   const params = useParams();
   const router = useRouter();
-  const classId = params.class_id as string; // ดึง classId จาก URL
+  const classId = params.class_id as string;
 
   const API_BASE_URL = "http://localhost:3000/api/v1";
 
-  // --- 1. Fetch Rubrics สำหรับ Dropdown ---
   useEffect(() => {
     const fetchRubrics = async () => {
       setLoadingRubrics(true);
       try {
         const response = await fetch(`${API_BASE_URL}/rubric`, {
-          credentials: "include", // สำคัญมากสำหรับ authenticateJWT
+          credentials: "include",
         });
         if (!response.ok) {
           throw new Error("Failed to fetch rubrics");
@@ -69,13 +53,11 @@ export default function AssignmentCreate() {
     };
 
     fetchRubrics();
-  }, []); // Run on mount
+  }, []);
 
-  // --- 2. Handle Form Submission ---
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    // Validation
     if (!title || !description || !deadline || !rubricId) {
       setError("Please fill in all fields.");
       return;
@@ -96,8 +78,8 @@ export default function AssignmentCreate() {
           body: JSON.stringify({
             title: title,
             description: description,
-            deadline: deadline!.toISOString(), // ส่งเป็น ISO String
-            rubricId: Number(rubricId), // แปลงกลับเป็น Number
+            deadline: deadline!.toISOString(),
+            rubricId: Number(rubricId),
           }),
         }
       );
@@ -111,9 +93,8 @@ export default function AssignmentCreate() {
       console.log("Assignment created:", data);
 
       setSuccess(true);
-      // กลับไปหน้าหลักของ Class (หรือหน้า Assignments)
       setTimeout(() => {
-        router.push(`/class/${classId}`); // (หรือ /class/${classId}/assignments)
+        router.push(`/class/${classId}`);
       }, 1500);
     } catch (err: any) {
       setError(err.message);
@@ -122,13 +103,12 @@ export default function AssignmentCreate() {
     }
   };
 
-  // --- Animation Variants ---
   const formVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1, // ทำให้แต่ละช่องทยอยโผล่
+        staggerChildren: 0.1,
       },
     },
   };
@@ -145,7 +125,6 @@ export default function AssignmentCreate() {
       transition={{ duration: 0.5 }}
       className="max-w-4xl mx-auto p-4 md:p-8"
     >
-      {/* --- Back Button --- */}
       <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-gray-500 hover:text-orange-600 transition-colors mb-6"
@@ -154,7 +133,6 @@ export default function AssignmentCreate() {
         Back
       </button>
 
-      {/* --- Form Card --- */}
       <div className="bg-white shadow-2xl rounded-xl p-8 md:p-12 border-t-4 border-orange-500">
         <h1 className="text-4xl font-bold text-gray-800 mb-8">
           Create New Assignment
@@ -167,7 +145,6 @@ export default function AssignmentCreate() {
           initial="hidden"
           animate="visible"
         >
-          {/* --- Title --- */}
           <motion.div variants={fieldVariant}>
             <label
               htmlFor="title"
@@ -186,7 +163,6 @@ export default function AssignmentCreate() {
             />
           </motion.div>
 
-          {/* --- Description --- */}
           <motion.div variants={fieldVariant}>
             <label
               htmlFor="description"
@@ -205,9 +181,7 @@ export default function AssignmentCreate() {
             />
           </motion.div>
 
-          {/* --- Deadline & Rubric (Grid) --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* --- Deadline --- */}
             <motion.div variants={fieldVariant}>
               <label
                 htmlFor="deadline"
@@ -225,7 +199,6 @@ export default function AssignmentCreate() {
               />
             </motion.div>
 
-            {/* --- Rubric --- */}
             <motion.div variants={fieldVariant}>
               <label
                 htmlFor="rubric"
@@ -253,7 +226,6 @@ export default function AssignmentCreate() {
             </motion.div>
           </div>
 
-          {/* --- Submit Button --- */}
           <motion.div variants={fieldVariant} className="pt-4">
             <button
               type="submit"
@@ -288,7 +260,6 @@ export default function AssignmentCreate() {
             </button>
           </motion.div>
 
-          {/* --- Error Message --- */}
           <AnimatePresence>
             {error && (
               <motion.p
