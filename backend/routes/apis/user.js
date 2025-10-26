@@ -63,6 +63,19 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+
+  res.status(200).json({
+    status: res.statusCode,
+    msg: "Logout successful",
+  });
+});
+
 // GET all users
 router.get("/", async (req, res) => {
   try {
