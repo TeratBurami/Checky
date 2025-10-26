@@ -250,7 +250,7 @@ export default function ClassDetail() {
                 <div className="flex items-center">
                   <FaRegClock className="text-gray-500"></FaRegClock>
                   <p className="ml-2 text-gray-500">
-                    Opened: {new Date(assignment.deadline).toLocaleString()}
+                    Opened: {new Date(assignment.openDate).toLocaleString()}
                   </p>
                 </div>
                 <p className="ml-2 text-red-500">
