@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import { FaCircleCheck, FaUserCheck, FaStar, FaRegClock, FaPencil, FaTrash, FaTriangleExclamation } from "react-icons/fa6";
 import { jwtDecode } from "jwt-decode";
 import {JwtPayload} from '@/lib/types'
+import { p } from "framer-motion/client";
 
 
 interface CourseDetail {
@@ -243,8 +244,8 @@ export default function ClassDetail() {
               onClick={() => handleAssignmentClick(assignment.assignmentId)}
             >
               <div className="flex items-center gap-8">
-                <FaCircleCheck className="text-2xl"></FaCircleCheck>
-                <h1 className="text-lg">{assignment.title}</h1>
+                <FaCircleCheck className={`text-2xl ${assignment.status==="GRADED"? "text-green-500": ""}`}></FaCircleCheck>
+                <h1 className={`text-lg ${assignment.status==="GRADED"? "text-green-500": ""}`}>{assignment.title}</h1>
               </div>
               <div className="flex gap-8 mt-4 items-center border-t border-gray-200 pt-2 w-2/3">
                 <div className="flex items-center">
@@ -258,6 +259,10 @@ export default function ClassDetail() {
                 </p>
               </div>
             </div>
+
+            {role === "student" && assignment.status === "GRADED" &&(
+              <p className="text-green-500 text-xl font-bold">Graded</p>
+            )}
 
             {role === "teacher" && (
               <div className="flex gap-4 pl-4">

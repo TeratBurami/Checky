@@ -56,18 +56,30 @@ export interface Rubric {
 //   criteria: RubricCriterion[];
 // }
 
+
+// (ปรับปรุง) ใช้ TeacherAttachmentFile ด้านล่างแทน
 export interface SubmissionFile {
-  file_id: string;
+  file_id: number; // ID สำหรับลบ
   filename: string;
-  url: string;
+  url: string; // URL สำหรับดาวน์โหลด
 }
 
+// (ใหม่) Interface นี้ตรงกับ JSON ที่คุณได้สำหรับ 'attachment'
+export interface TeacherAttachmentFile {
+  file_id: number;
+  filename: string;
+  url: string; // ใน API response ของคุณ นี่คือ ID ของไฟล์
+}
+
+// (ปรับปรุง) แก้ไขให้ตรงกับ JSON response ที่คุณได้รับ
 export interface MySubmission {
-  submission_id: string;
-  submitted_at: string;
+  submissionId: number; // แก้ไข: submission_id -> submissionId (number)
+  submittedAt: string; // แก้ไข: submitted_at -> submittedAt
   score: number | null;
   content: string | null;
-  files: SubmissionFile[];
+  attachment: TeacherAttachmentFile[]; // แก้ไข: files -> attachment
+  teacherComment: string | null; // (เพิ่ม)
+  peerReviewsReceived: any[]; // (เพิ่ม)
 }
 
 export interface Assignment {
@@ -76,15 +88,9 @@ export interface Assignment {
   description: string;
   createdAt: string;
   deadline: string;
-  rubricId: number;
   rubric: Rubric;
   mySubmission: MySubmission | null;
   submissions?: Submission[];
-}
-
-export interface TeacherAttachmentFile {
-  filename: string;
-  url: string;
 }
 
 export interface Submission {
@@ -95,7 +101,7 @@ export interface Submission {
     lastName: string;
   };
   content: string | null;
-  attachment: TeacherAttachmentFile[];
+  attachment: TeacherAttachmentFile[]; // (ใช้ซ้ำ)
   submittedAt: string;
   score: number | null;
   teacherComment: string | null;
@@ -123,4 +129,9 @@ export interface SubmissionDetail {
   assignmentInfo: {
     title: string;
   };
+}
+
+export interface RubricBrief {
+  rubricId: number;
+  name: string;
 }

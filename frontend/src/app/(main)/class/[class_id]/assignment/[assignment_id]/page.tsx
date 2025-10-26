@@ -15,7 +15,7 @@ import {FaCloudArrowUp,
 import {
   Assignment,
   JwtPayload,
-} from "@/lib/types";
+} from "@/lib/types"; // (types.ts ที่อัปเดตแล้ว)
 import { useEffect, useRef, useState, DragEvent, MouseEvent } from "react";
 import { useParams } from "next/navigation";
 import Cookies from "js-cookie";
@@ -25,14 +25,15 @@ export default function AssignmentDetail() {
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | undefined>();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null); // (ยังใช้ไฟล์เดี่ยวสำหรับการ *เลือก* ไฟล์)
+  
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); 
+  
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileError, setFileError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isEditingSubmission, setIsEditingSubmission] = useState(false);
-
-  const [isSubmitting, setIsSubmitting] = useState(false); // (ใหม่) State กันการกดปุ่มรัว
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024;
   const params = useParams();
@@ -62,8 +63,8 @@ export default function AssignmentDetail() {
   };
 
   useEffect(() => {
-    fetchAssignment(); // เรียกใช้ตอนเริ่ม
-  }, [classId, assignmentId]); // (เอา fetchAssignment ออกจาก dependency array)
+    fetchAssignment();
+  }, [classId, assignmentId]); 
 
   useEffect(() => {
     const token = Cookies.get("token");
@@ -77,63 +78,84 @@ export default function AssignmentDetail() {
     }
   }, []);
 
-  // --- (ฟังก์ชันจัดการไฟล์ ไม่เปลี่ยนแปลง) ---
   const allowedTypes = [
     "image/jpeg", "image/png", "application/pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "text/plain",
   ];
 
-  const handleFileSelected = (file: File | undefined) => {
+  const handleFileSelected = (files: FileList | null | undefined) => {
     setFileError("");
-    if (!file) return;
-    if (file.size > MAX_FILE_SIZE) {
-      setFileError("File is too large (Max 20MB).");
+    if (!files || files.length === 0) return;
+
+    const newFiles: File[] = Array.from(files);
+    let error = "";
+
+    for (const file of newFiles) {
+      if (file.size > MAX_FILE_SIZE) {
+        error = `File "${file.name}" is too large (Max 20MB).`;
+        break;
+      }
+      if (!allowedTypes.includes(file.type)) {
+        error = `File "${file.name}" has invalid type (Only .jpeg, .png, .pdf, .docx, .txt allowed).`;
+        break;
+      }
+    }
+
+    if (error) {
+      setFileError(error);
       return;
     }
-    if (!allowedTypes.includes(file.type)) {
-      setFileError("Invalid file type (Only .jpeg, .png, .pdf, .docx, .txt allowed).");
-      return;
+
+    setSelectedFiles(prevFiles => [...prevFiles, ...newFiles]);
+    setIsEditingSubmission(true);
+  };
+
+  const handleRemoveSelectedFile = (indexToRemove: number) => {
+    setSelectedFiles(prevFiles => prevFiles.filter((_, index) => index !== indexToRemove));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; 
     }
-    setSelectedFile(file);
-    setIsEditingSubmission(true); // (ใหม่) เมื่อเลือกไฟล์ ให้เข้าโหมด "อัปโหลด" ทันที
   };
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFileSelected(e.target.files?.[0]);
+    handleFileSelected(e.target.files);
   };
   const onDragOver = (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragOver(true); };
   const onDragLeave = (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragOver(false); };
+  
   const onDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragOver(false);
-    handleFileSelected(e.dataTransfer.files?.[0]);
+    handleFileSelected(e.dataTransfer.files);
   };
   const onDropzoneDoubleClick = () => { fileInputRef.current?.click(); };
-  const onBrowseClick = (e: MouseEvent<HTMLButtonElement>) => {
+  const onBrowseClick = (e: MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
     e.stopPropagation();
     fileInputRef.current?.click();
   };
-  // --- (จบฟังก์ชันจัดการไฟล์) ---
 
-  // --- (อัปเดต) ฟังก์ชัน Cancel ---
   const handleCancel = () => {
-    setSelectedFile(null);
+    setSelectedFiles([]); 
     setFileError("");
-    setIsEditingSubmission(false); // กลับไปหน้าแสดงรายการไฟล์ที่ส่งแล้ว
+    setIsEditingSubmission(false); 
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; 
+    }
   };
 
-  // --- (ใหม่) ฟังก์ชันลบไฟล์ ---
+  // (อัปเดต - แก้ไข URL)
   const handleDeleteFile = async (fileId: string) => {
     if (!confirm("Are you sure you want to delete this file?")) return;
 
     try {
       setIsSubmitting(true);
+      // (อัปเดต) แก้ไข URL จาก /class/ เป็น /submission/
       const response = await fetch(
         `${API_BASE_URL}/submission/${assignmentId}/file/${fileId}`,
         {
           method: "DELETE",
-          credentials: "include", // สำคัญมากสำหรับ authenticateJWT
+          credentials: "include", 
         }
       );
 
@@ -152,10 +174,9 @@ export default function AssignmentDetail() {
     }
   };
 
-  // --- (อัปเดต) ฟังก์ชันส่งงาน ---
   const handleSubmit = async () => {
-    if (!selectedFile) {
-      setFileError("Please select a file first.");
+    if (selectedFiles.length === 0) {
+      setFileError("Please select at least one file.");
       return;
     }
 
@@ -163,9 +184,11 @@ export default function AssignmentDetail() {
     setFileError("");
 
     const formData = new FormData();
-    formData.append("files", selectedFile);
-    // API ของคุณมี field 'content' แต่เราไม่มี input ในหน้านี้
-    // เราจะส่งเป็นค่าว่างไปก่อน (หรือคุณจะเพิ่ม textarea เองก็ได้)
+    
+    for (const file of selectedFiles) {
+      formData.append("files", file);
+    }
+
     formData.append("content", assignment?.mySubmission?.content || "");
 
     try {
@@ -173,10 +196,8 @@ export default function AssignmentDetail() {
         `${API_BASE_URL}/class/${assignmentId}/submission`,
         {
           method: "POST",
-          credentials: "include", // สำคัญมากสำหรับ authenticateJWT
+          credentials: "include",
           body: formData,
-          // ไม่ต้องตั้ง 'Content-Type': 'multipart/form-data'
-          // 'fetch' จะตั้งค่า 'boundary' ให้เองเมื่อเจอ FormData
         }
       );
 
@@ -186,9 +207,12 @@ export default function AssignmentDetail() {
       }
 
       console.log("Submission successful");
-      setSelectedFile(null); // เคลียร์ไฟล์ที่เลือก
-      setIsEditingSubmission(false); // กลับไปหน้า list
-      await fetchAssignment(); // โหลดข้อมูล assignment ใหม่ (สำคัญมาก)
+      setSelectedFiles([]); 
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; 
+      }
+      setIsEditingSubmission(false); 
+      await fetchAssignment(); 
 
     } catch (err: any) {
       console.error("Submit error:", err);
@@ -205,26 +229,25 @@ export default function AssignmentDetail() {
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.split(".").pop()?.toLowerCase();
-    if (ext === "pdf") return <FaFilePdf className="text-red-600 text-4xl" />;
-    if (ext === "docx") return <FaFileWord className="text-blue-600 text-4xl" />;
+    if (ext === "pdf") return <FaFilePdf className="text-red-600 text-3xl" />; 
+    if (ext === "docx") return <FaFileWord className="text-blue-600 text-3xl" />; 
     if (ext === "png" || ext === "jpg" || ext === "jpeg")
-      return <FaFileImage className="text-purple-600 text-4xl" />;
-    if (ext === "txt") return <FaFileAlt className="text-gray-600 text-4xl" />;
-    return <FaFileLines className="text-gray-500 text-4xl" />;
+      return <FaFileImage className="text-purple-600 text-3xl" />; 
+    if (ext === "txt") return <FaFileAlt className="text-gray-600 text-3xl" />; 
+    return <FaFileLines className="text-gray-500 text-3xl" />; 
   };
 
-  if (loading && !assignment) { // (ปรับปรุง)
+  if (loading && !assignment) { 
     return <p className="p-12 text-center text-lg">Loading assignment details...</p>;
   }
   if (!assignment) {
     return <p className="p-12 text-center text-lg">Assignment not found.</p>;
   }
 
-  // (ใหม่) ตัวแปรช่วยเช็ค
   const hasSubmittedFiles =
-    assignment.mySubmission && // 1. เช็คว่า mySubmission ไม่ใช่ null
-  assignment.mySubmission.files && // 2. (เพิ่ม) เช็คว่า .files ไม่ใช่ null/undefined
-  assignment.mySubmission.files.length > 0;
+    assignment.mySubmission && 
+    assignment.mySubmission.attachment && 
+    assignment.mySubmission.attachment.length > 0;
 
   return (
     <div>
@@ -289,7 +312,7 @@ export default function AssignmentDetail() {
             // --- 1. หน้าสำหรับอัปโหลดไฟล์ ---
             <div>
               <h3 className="text-xl font-semibold">
-                {hasSubmittedFiles ? "Add Another File" : "Submit Assignment"}
+                {hasSubmittedFiles ? "Add More Files" : "Submit Assignment"}
               </h3>
               <p className="text-gray-400 text-sm mt-2">
                 Maximum file size: 20 MB. (You can add multiple files)
@@ -298,44 +321,66 @@ export default function AssignmentDetail() {
               <input
                 type="file" ref={fileInputRef} onChange={onFileChange}
                 className="hidden" accept=".jpeg,.png,.pdf,.docx,.txt"
+                multiple 
               />
 
               <div
                 onDoubleClick={onDropzoneDoubleClick} onDragOver={onDragOver}
                 onDragLeave={onDragLeave} onDrop={onDrop}
-                className={`... (className เดิม ไม่เปลี่ยน) ...`}
+                className={`border-2 border-dashed rounded-lg h-64 flex justify-center items-center transition-colors ${
+                  isDragOver ? "border-orange-500 bg-orange-50" : "border-gray-300"
+                } ${selectedFiles.length > 0 ? "bg-gray-50" : ""}`} 
               >
-                {!selectedFile ? (
+                {selectedFiles.length === 0 ? (
                   <div className="flex flex-col justify-between items-center h-full pt-14 pb-4 cursor-pointer">
                     <FaCloudArrowUp className="text-4xl text-gray-500" />
                     <div className="mb-2 text-center">
-                      <p className="text-lg">Drop file or browse</p>
+                      <p className="text-lg">Drop files or browse</p> 
                       <p className="text-gray-500">Format: .jpeg, .png & Max file size: 20 MB</p>
                     </div>
                     <button
                       onClick={onBrowseClick}
                       className="cursor-pointer text-white font-semibold bg-orange-400 rounded-lg py-1 px-2 z-10"
                     >
-                      Browse File
+                      Browse Files 
                     </button>
                   </div>
                 ) : (
-                  <div className="flex flex-col justify-center items-center h-full p-4 text-center">
-                    {getFileIcon(selectedFile.name)}
-                    <p className="text-lg font-semibold mt-4">File Selected:</p>
-                    <p className="text-gray-700">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-500">
-                      ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                    </p>
-                    <button
-                      onClick={() => {
-                        setSelectedFile(null);
-                        if (fileInputRef.current) fileInputRef.current.value = "";
-                      }}
-                      className="mt-4 text-sm text-red-600 hover:underline"
+                  <div className="flex flex-col justify-start items-center h-full p-4 text-center w-full">
+                    <p className="text-lg font-semibold mt-4 flex-shrink-0">Selected Files:</p>
+                    <div className="w-full mt-2 space-y-2 overflow-y-auto max-h-40 px-4"> 
+                      {selectedFiles.map((file, index) => (
+                        <li 
+                          key={index} 
+                          className="flex items-center justify-between p-2 bg-gray-100 rounded-md w-full list-none border border-gray-200"
+                        >
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            {getFileIcon(file.name)}
+                            <div className="text-left">
+                              <span className="text-sm text-gray-800 truncate block" title={file.name}>
+                                {file.name}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                ({ (file.size / 1024 / 1024).toFixed(2) } MB)
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleRemoveSelectedFile(index)}
+                            className="ml-2 text-red-600 hover:text-red-800 flex-shrink-0 p-1 rounded-full hover:bg-red-100"
+                            title="Remove file"
+                          >
+                            <FaTrash />
+                          </button>
+                        </li>
+                      ))}
+                    </div>
+                      <a
+                      onClick={onBrowseClick}
+                      className="mt-4 text-sm text-blue-600 hover:underline flex-shrink-0 cursor-pointer"
                     >
-                      Remove file
-                    </button>
+                      + Add more files...
+                    </a>
                   </div>
                 )}
               </div>
@@ -354,10 +399,10 @@ export default function AssignmentDetail() {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={!selectedFile || isSubmitting}
+                  disabled={selectedFiles.length === 0 || isSubmitting} 
                   className="font-bold rounded-lg cursor-pointer hover:bg-orange-500 bg-orange-400 w-full p-2 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "Submitting..." : (hasSubmittedFiles ? "Add File" : "Submit")}
+                  {isSubmitting ? "Submitting..." : (hasSubmittedFiles ? "Add Files" : "Submit")}
                 </button>
               </div>
             </div>
@@ -366,7 +411,6 @@ export default function AssignmentDetail() {
             <div>
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-semibold">Your Submission(s)</h3>
-                {/* สถานะคะแนน */}
                 {assignment.mySubmission?.score !== null ? (
                     <div className="text-center">
                       <p className="text-sm text-gray-500">Graded</p>
@@ -386,14 +430,15 @@ export default function AssignmentDetail() {
 
               <p className="text-sm text-gray-500 mt-2">
                 Submitted:{" "}
-                {new Date(assignment.mySubmission!.submitted_at).toLocaleString()}
+                {new Date(assignment.mySubmission!.submittedAt).toLocaleString()} 
               </p>
 
-              {/* (ใหม่) List รายการไฟล์ที่ส่งแล้ว */}
               <ul className="mt-6 space-y-3">
-                {assignment.mySubmission!.files.map((file) => (
+                {assignment.mySubmission!.attachment
+                  .filter(file => file && file.file_id) // (เพิ่ม) ป้องกัน error
+                  .map((file) => (
                   <li 
-                    key={file.file_id}
+                    key={file.file_id} // (อัปเดต) ใช้ file_id เป็น key
                     className="border border-gray-200 rounded-lg p-4 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-4">
@@ -404,9 +449,8 @@ export default function AssignmentDetail() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                      {/* (ใหม่) ปุ่ม Download */}
                       <a
-                        href={`${API_BASE_URL}/submission/download/${file.file_id}`}
+                        href={`${API_BASE_URL}/submission/download/${file.url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
@@ -414,9 +458,8 @@ export default function AssignmentDetail() {
                         <FaDownload /> Download
                       </a>
                       
-                      {/* (ใหม่) ปุ่ม Delete */}
                       <button
-                        onClick={() => handleDeleteFile(file.file_id)}
+                        onClick={() => handleDeleteFile(file.file_id.toString())}
                         disabled={isSubmitting}
                         className="flex items-center gap-2 text-red-600 hover:text-red-800 hover:underline disabled:opacity-50"
                       >
@@ -426,16 +469,47 @@ export default function AssignmentDetail() {
                   </li>
                 ))}
               </ul>
-
-              <div className="flex justify-end mt-6">
+              <div className="flex justify-end mt-12">
                 <button
-                  onClick={() => setIsEditingSubmission(true)} // แค่เปิด uploader
+                  onClick={() => setIsEditingSubmission(true)} 
                   className="flex items-center gap-2 font-bold rounded-lg cursor-pointer hover:bg-orange-500 bg-orange-400 p-2 px-4 text-white"
                 >
                   <FaCloudArrowUp />
-                  Add Another File
+                  Add More Files 
                 </button>
               </div>
+
+              <div className="mt-6 border-t border-gray-200 pt-4">
+                <h4 className="text-lg font-semibold text-gray-800 mb-2">Teacher's Feedback</h4>
+                {/* (อัปเดต) ใช้ ternary operator ( ... ? ... : ... ) */}
+                {assignment.mySubmission?.teacherComment ? (
+                  <p className="text-gray-700 bg-gray-50 p-4 rounded-md border border-gray-200 whitespace-pre-wrap">
+                    {assignment.mySubmission.teacherComment}
+                  </p>
+                ) : (
+                  <p className="text-gray-500 italic px-4 py-2">No feedback provided yet.</p>
+                )}
+              </div>
+
+              {/* === (อัปเดต) ส่วนแสดง Peer Reviews (แสดงเสมอ) === */}
+              <div className="mt-6 border-t border-gray-200 pt-4">
+                <h4 className="text-lg font-semibold text-gray-800 mb-2">Peer Reviews</h4>
+                {/* (อัปเดต) ใช้ ternary operator ( ... ? ... : ... ) */}
+                {assignment.mySubmission?.peerReviewsReceived && assignment.mySubmission.peerReviewsReceived.length > 0 ? (
+                  <ul className="space-y-4">
+                    {assignment.mySubmission.peerReviewsReceived.map((review, index) => (
+                      <li key={index} className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                        <p className="font-semibold text-gray-700">Reviewed by: {review.reviewerName || 'Anonymous'}</p>
+                        <p className="text-gray-700 mt-2 whitespace-pre-wrap">{review.comment}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 italic px-4 py-2">No peer reviews received yet.</p>
+                )}
+              </div>
+
+
             </div>
           )}
         </div>
@@ -454,25 +528,19 @@ export default function AssignmentDetail() {
             Review and grade the submissions for this assignment.
           </p>
 
-          {/* ตรวจสอบว่ามี submission ส่งมาใน 'assignment' state หรือไม่ */}
           {!assignment.submissions || assignment.submissions.length === 0 ? (
-            // --- ถ้าไม่มีใครส่งงาน ---
             <div className="text-center p-12 text-gray-500">
               <FaFileLines className="text-4xl mx-auto mb-4" />
               <p>No submissions have been made yet.</p>
             </div>
           ) : (
-            // --- ถ้ามีคนส่งงานแล้ว ---
             <ul className="mt-6 space-y-4">
-              {/* (อัปเดต) map over 'assignment.submissions' */}
               {assignment.submissions.map((sub,index) => (
                 <li
                   key={sub.submissionId}
                   className="border border-gray-200 rounded-lg p-4 transition-all hover:shadow-md"
                 >
-                  {/* ส่วนข้อมูลหลัก (นักเรียน, สถานะ, ปุ่ม) */}
                   <div className="flex justify-between items-center">
-                    {/* ข้อมูลนักเรียน */}
                     <div className="flex items-center gap-3">
                       <span className="flex items-center justify-center w-10 h-10 bg-orange-100 text-orange-600 rounded-full font-bold">
                         {sub.studentInfo.firstName[0]}
@@ -489,9 +557,7 @@ export default function AssignmentDetail() {
                       </div>
                     </div>
 
-                    {/* สถานะ และ ปุ่ม */}
                     <div className="flex items-center gap-6">
-                      {/* สถานะ (ตรวจแล้ว/ยังไม่ตรวจ) */}
                       {sub.score !== null ? (
                         <div className="text-center">
                           <p className="text-sm text-gray-500">Graded</p>
@@ -508,65 +574,15 @@ export default function AssignmentDetail() {
                         </div>
                       )}
 
-                      {/* (อัปเดต) ปุ่มตรวจงาน */}
                       <button
                         onClick={() =>
-                          handleGradeClick(index) // แปลง number เป็น string
+                          handleGradeClick(index) 
                         }
                         className="bg-orange-500 text-white px-5 py-2 rounded-lg font-bold hover:bg-orange-600 transition-colors"
                       >
-                        {sub.score !== null ? "View/Edit Grade" : "Grade"}
+                        View/Grade
                       </button>
                     </div>
-                  </div>
-
-                  {/* (ใหม่) ส่วนแสดงไฟล์แนบ และปุ่มดาวน์โหลด */}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <h5 className="text-sm font-semibold text-gray-600 mb-2">
-                      Submitted Files:
-                    </h5>
-                    {sub.attachment && sub.attachment.length > 0 ? (
-                      <ul className="space-y-2">
-                        {sub.attachment.map((file, index) => (
-                          <li
-                            key={index}
-                            className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
-                          >
-                            <div className="flex items-center gap-2 overflow-hidden">
-                              {getFileIcon(file.filename)}
-                              <span className="text-sm text-gray-800 truncate" title={file.filename}>
-                                {file.filename}
-                              </span>
-                            </div>
-                            <a
-                              href={`${API_BASE_URL}/submission/download/${file.url}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-shrink-0 flex items-center gap-1 text-xs text-blue-600 hover:underline ml-4"
-                            >
-                              <FaDownload /> Download
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-gray-500 italic">
-                        No files attached.
-                      </p>
-                    )}
-                    
-                    {/* (ใหม่) แสดง 'content' ถ้ามี */}
-                    {sub.content && (
-                      <div className="mt-3">
-                        <h5 className="text-sm font-semibold text-gray-600 mb-1">
-                          Comment/Text Submission:
-                        </h5>
-                        <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded border border-gray-200 whitespace-pre-wrap">
-                          {sub.content}
-                        </p>
-                      </div>
-                    )}
-
                   </div>
                 </li>
               ))}

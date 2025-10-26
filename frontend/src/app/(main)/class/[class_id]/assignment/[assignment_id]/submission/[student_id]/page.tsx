@@ -98,7 +98,7 @@ export default function GradeSubmissionPage() {
       // (ถูกต้อง) ใช้ API 'grading' ที่คุณให้มา
       // PUT /api/v1/class/:submission_id/grade
       const response = await fetch(
-        `${API_BASE_URL}/class/${submission?.submission_id}/grade`, // <== (ใช้ Path ที่คุณระบุ)
+        `${API_BASE_URL}/${submission?.submission_id}/grade`, // <== (ใช้ Path ที่คุณระบุ)
         {
           method: "PUT",
           credentials: "include", // สำหรับ authenticateJWT
@@ -235,7 +235,7 @@ export default function GradeSubmissionPage() {
                       {/* (ถูกต้อง) Download Button (ใช้ <a href>) */}
                       {/* API นี้จะ force download (res.download()) */}
                       <a
-                        href={`${API_BASE_URL}/class/download/${file.file_id}`}
+                        href={`${API_BASE_URL}/download/${file.file_id}`}
                         target="_blank" // เปิดในแท็บใหม่ (จำเป็นสำหรับการดาวน์โหลด)
                         rel="noopener noreferrer"
                         className="flex-shrink-0 flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium px-3 py-1 rounded-full bg-blue-100/60 hover:bg-blue-100 transition-all"

@@ -17,7 +17,7 @@ export default function Navbar({ role }: NavbarProps) {
     const inactiveLinkClass = "border-b-4 border-transparent";
 
     return (
-        <nav className="bg-[#FDFBEF] px-4 top-0 z-0 w-full h-18 fixed shadow shadow-slate-300 flex justify-between items-center">
+        <nav className="bg-[#FDFBEF] px-4 top-0 z-20 w-full h-18 fixed shadow shadow-slate-300 flex justify-between items-center">
             <div className="flex gap-8 items-center">
                 <Link href="/">
                     <img src="/logo.png" className="w-10 h-12 mr-10" alt="" />
