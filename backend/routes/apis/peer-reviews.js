@@ -190,4 +190,81 @@ router.put("/:review_id", authenticateJWT("student"), async (req, res) => {
     }
 });
 
+// GET: Get full peer review details by review_id
+router.get("/:review_id", authenticateJWT(["student", "teacher"]), async (req, res) => {
+  const { review_id } = req.params;
+
+  try {
+    const { rows } = await db.query(
+      `
+      SELECT 
+        pr.review_id AS "reviewId",
+        pr.comments,
+        pr.status,
+        pr.review_deadline AS "reviewDeadline",
+        pr.created_at AS "createdAt",
+
+        -- Reviewer info
+        json_build_object(
+          'userId', reviewer.userID,
+          'firstName', reviewer.firstName,
+          'lastName', reviewer.lastName,
+          'email', reviewer.email,
+          'role', reviewer.role
+        ) AS reviewer,
+
+        -- Student info
+        json_build_object(
+          'userId', student.userID,
+          'firstName', student.firstName,
+          'lastName', student.lastName,
+          'email', student.email,
+          'role', student.role
+        ) AS student,
+
+        -- Assignment info
+        json_build_object(
+          'assignmentId', a.assignment_id,
+          'title', a.title,
+          'description', a.description,
+          'deadline', a.deadline,
+          'createdAt', a.created_at
+        ) AS assignment,
+
+        -- Submission info
+        json_build_object(
+          'submissionId', s.submission_id,
+          'content', s.content,
+          'submittedAt', s.submitted_at,
+          'score', s.score,
+          'teacherComment', s.teacher_comment,
+          'files', COALESCE(
+            json_agg(
+              json_build_object('fileId', f.file_id, 'filename', f.filename, 'url', f.url)
+            ) FILTER (WHERE f.file_id IS NOT NULL), '[]'::json
+          )
+        ) AS submission
+
+      FROM peer_reviews pr
+      JOIN submissions s ON pr.submission_id = s.submission_id
+      JOIN assignments a ON s.assignment_id = a.assignment_id
+      JOIN users reviewer ON pr.reviewer_id = reviewer.userID
+      JOIN users student ON s.student_id = student.userID
+      LEFT JOIN submission_files f ON f.submission_id = s.submission_id
+      WHERE pr.review_id = $1
+      GROUP BY pr.review_id, reviewer.userID, student.userID, a.assignment_id, s.submission_id
+      `,
+      [review_id]
+    );
+
+    if (rows.length === 0)
+      return res.status(404).json({ error: "Peer review not found" });
+
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("Error fetching peer review details:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
