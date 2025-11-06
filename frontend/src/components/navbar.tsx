@@ -24,7 +24,7 @@ export default function Navbar({ role }: NavbarProps) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const baseLinkClass = "px-4 h-18 text-center content-center";
+    const baseLinkClass = "px-4 h-18 text-center content-center transition-all delay-50 duration-300 ease-in-out";
     const activeLinkClass = "border-b-4 border-orange-500";
     const inactiveLinkClass = "border-b-4 border-transparent";
 
@@ -84,6 +84,32 @@ export default function Navbar({ role }: NavbarProps) {
                         }`}
                     >
                         Peer Reviews
+                    </Link>
+                )}
+
+                {userRole === "student" && (
+                    <Link
+                        href="/performance"
+                        className={`${baseLinkClass} ${
+                            currentPath.startsWith("/performance")
+                                ? activeLinkClass
+                                : inactiveLinkClass
+                        }`}
+                    >
+                        My Performance
+                    </Link>
+                )}
+
+                {userRole === "student" && (
+                    <Link
+                        href="/ai-analysis"
+                        className={`${baseLinkClass} ${
+                            currentPath.startsWith("/ai-analysis")
+                                ? activeLinkClass
+                                : inactiveLinkClass
+                        }`}
+                    >
+                        AI Analysis
                     </Link>
                 )}
 

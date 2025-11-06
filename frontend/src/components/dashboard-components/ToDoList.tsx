@@ -49,7 +49,6 @@ export default function ToDoList() {
             onChange={() => handleToggleCheck(idx)}
           />
 
-          {/* ส่วนนี้ทำงานได้อัตโนมัติ เพราะมันอ่านค่า item.check จาก state */}
           <div className={item.check ? "line-through text-gray-500" : ""}>
             <p className="font-semibold">{item.title}</p>
             <p className="text-sm">{item.date}</p>

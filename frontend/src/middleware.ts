@@ -4,6 +4,12 @@ import { jwtVerify } from 'jose';
 
 const publicRoutes = ['/login', '/register'];
 
+const studentOnlyRoutes = [
+  '/peer-review',
+  '/ai-analysis',
+  '/performance',
+];
+
 const teacherOnlyRoutes = [
   '/rubric',
   '/class/create',
@@ -17,7 +23,6 @@ const allPrivateRoutes = [
   '/class',
   '/notification',
   '/assignment',
-  '/peer-review',
 ];
 
 interface JwtPayload {
@@ -70,20 +75,27 @@ export async function middleware(request: NextRequest) {
     const isTeacherOnlyPath = teacherOnlyRoutes.some((route) =>
       pathname.startsWith(route)
     );
+    const isStudentOnlyPath = studentOnlyRoutes.some((route) =>
+      pathname.startsWith(route)
+    );
 
     if (isTeacherOnlyPath) {
       if (userRole !== 'teacher') {
         response = NextResponse.redirect(new URL('/', request.url));
       }
-    } else {
 
-      const allowedRoutes = [...allPrivateRoutes, ...teacherOnlyRoutes]; 
-      const isAllowedPrivatePath = allowedRoutes.some((route) => {
+    } else if (isStudentOnlyPath) {
+      if (userRole !== 'student') {
+        response = NextResponse.redirect(new URL('/', request.url));
+      }
+
+    } else {
+      const isSharedPrivateRoute = allPrivateRoutes.some((route) => {
         if (route === '/') return pathname === route;
         return pathname.startsWith(route);
       });
       
-      if (!isAllowedPrivatePath) {
+      if (!isSharedPrivateRoute) {
          response = NextResponse.redirect(new URL('/', request.url));
       }
     }
@@ -99,6 +111,7 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+// --- 6. Config (ไม่เปลี่ยนแปลง) ---
 export const config = {
   matcher: '/((?!api|_next/static|_next/image|.*\\.(?:png|jpg|jpeg|gif|ico)$).*)',
 };

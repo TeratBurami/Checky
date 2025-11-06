@@ -20,7 +20,7 @@ export interface Member {
   userId: number;
   firstName: string;
   lastName: string;
-  role: string;
+  email: string;
 }
 
 export interface Rubric {
@@ -127,4 +127,86 @@ export interface SubmissionDetail {
 export interface RubricBrief {
   rubricId: number;
   name: string;
+}
+
+export interface AIAnalysis {
+  analysisId: string;
+  primaryTopic: string;
+  summary: string;
+  feedback: {
+    goodPoints: string[];
+    areasForImprovement: string[];
+  };
+}
+
+export interface AIResource {
+  id: string;
+  type: "video" | "article" | "exercise";
+  title: string;
+  description: string;
+  url: string;
+}
+
+export interface AIResourceResponse {
+  topic: string;
+  suggestedResources: AIResource[];
+}
+
+export interface PerformanceTopic {
+  topic: string;
+  description: string;
+}
+
+export interface RecentScore {
+  assignmentId: number;
+  title: string;
+  score: number | null;
+  link: string;
+}
+
+export interface ImprovementTrackingData {
+  labels: string[];
+
+  datasets: Array<{
+    label: string;
+    data: number[];
+  }>;
+}
+
+export interface MainWeakness {
+  topic: string;
+  description: string;
+  nextLearningStep: NextLearningStep;
+  dailyExercise: DailyExercise;
+}
+
+export interface NextLearningStep {
+  title: string;
+  description: string;
+  resource: {
+    id: string;
+    type: "video" | "article" | "exercise";
+    title: string;
+    url: string;
+  };
+}
+
+export interface DailyExercise {
+  topic: string;
+  question: string;
+  content?: string;
+}
+
+export interface DashboardData {
+  metadata: {
+    timeframe: "7d" | "30d" | "all";
+  };
+  overallStatus: {
+    level: "Needs Focus" | "Improving" | "Steady" | "Excellent";
+    summary: string;
+  };
+  topStrengths: PerformanceTopic[];
+  mainWeaknesses: MainWeakness[];
+  recentScores: RecentScore[];
+  improvementTrackingData: ImprovementTrackingData;
 }
