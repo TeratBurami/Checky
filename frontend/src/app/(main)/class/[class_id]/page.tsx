@@ -3,11 +3,20 @@
 import { useEffect, useState, MouseEvent } from "react";
 import { useParams } from "next/navigation";
 import Cookies from "js-cookie";
-import { FaCircleCheck, FaUserCheck, FaStar, FaRegClock, FaPencil, FaTrash, FaTriangleExclamation } from "react-icons/fa6";
+import {
+  FaCircleCheck,
+  FaUserCheck,
+  FaStar,
+  FaRegClock,
+  FaPencil,
+  FaTrash,
+  FaTriangleExclamation,
+  FaChartArea,
+} from "react-icons/fa6";
 import { jwtDecode } from "jwt-decode";
-import {JwtPayload} from '@/lib/types'
-import { p } from "framer-motion/client";
-
+import { JwtPayload } from "@/lib/types";
+import { ChartData, ChartOptions } from "chart.js";
+import DynamicChart from "@/components/DynamicChart";
 
 interface CourseDetail {
   classId: number;
@@ -20,15 +29,19 @@ interface CourseDetail {
     lastName: string;
   };
   assignments: any[];
+  completeness: number;
+  avgScore: number;
+  membersCount: number;
 }
-
 
 export default function ClassDetail() {
   const [course, setCourse] = useState<CourseDetail>();
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | undefined>();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<
+    number | null
+  >(null);
   const [deleting, setDeleting] = useState(false);
   const params = useParams();
   const classId = params.class_id;
@@ -40,7 +53,8 @@ export default function ClassDetail() {
       try {
         setLoading(true);
         const response = await fetch(
-          `http://localhost:3000/api/v1/class/${classId}`,{credentials: "include"}
+          `http://localhost:3000/api/v1/class/${classId}`,
+          { credentials: "include" }
         );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -62,22 +76,19 @@ export default function ClassDetail() {
   useEffect(() => {
     const token = Cookies.get("token");
     if (token) {
-          try {
-            const decodedPayload = jwtDecode<JwtPayload>(token);
-            console.log("Decoded role:", decodedPayload.role);
-            setRole(decodedPayload.role);
-    
-          } catch (error) {
-            console.error("Failed to decode JWT:", error);
-          }
-        }
+      try {
+        const decodedPayload = jwtDecode<JwtPayload>(token);
+        console.log("Decoded role:", decodedPayload.role);
+        setRole(decodedPayload.role);
+      } catch (error) {
+        console.error("Failed to decode JWT:", error);
+      }
+    }
   }, []);
 
-
-  const handleAssignmentClick = (assignmentId:number) => {
+  const handleAssignmentClick = (assignmentId: number) => {
     window.location.href = `/class/${classId}/assignment/${assignmentId}`;
-
-  }
+  };
 
   const handleClassEditClick = () => {
     window.location.href = `/class/${classId}/edit`;
@@ -115,7 +126,7 @@ export default function ClassDetail() {
         throw new Error("Failed to delete assignment");
       }
 
-      setCourse(prevCourse => {
+      setCourse((prevCourse) => {
         if (!prevCourse) return undefined;
         return {
           ...prevCourse,
@@ -127,7 +138,6 @@ export default function ClassDetail() {
 
       setShowDeleteModal(false);
       setSelectedAssignmentId(null);
-
     } catch (e) {
       console.error(e);
     } finally {
@@ -139,7 +149,7 @@ export default function ClassDetail() {
     {
       title: "Members",
       icon: <FaUserCheck className="text-3xl"></FaUserCheck>,
-      value: "2",
+      value: course?.membersCount,
       href: `/class/${classId}/member`,
     },
   ];
@@ -148,14 +158,94 @@ export default function ClassDetail() {
     {
       title: "Completed",
       icon: <FaCircleCheck className="text-3xl"></FaCircleCheck>,
-      value: "50%",
+      value: course?.completeness,
     },
     {
       title: "Average Score",
       icon: <FaStar className="text-3xl"></FaStar>,
-      value: "78.5",
+      value: course?.avgScore,
     },
   ];
+
+  const calculateAverage = (scores: number[]): number => {
+  if (scores.length === 0) return 0;
+  const sum = scores.reduce((acc, score) => acc + score, 0);
+  return sum / scores.length;
+};
+
+const getRandomScore = () => Math.floor(Math.random() * (10 - 0 + 1)) + 0;
+
+const memberCount = course?.membersCount ?? 0;
+const grammarScores = Array.from({ length: memberCount }, () => getRandomScore());
+const vocabScores = Array.from({ length: memberCount }, () => getRandomScore());
+const avgGrammar = calculateAverage(grammarScores);
+const avgVocab = calculateAverage(vocabScores);
+
+
+const scoreData: ChartData<"bar"> = {
+  labels: ["Average Class Score"], 
+  
+  datasets: [
+    {
+      label: "Grammar",
+      data: [avgGrammar], 
+      backgroundColor: "rgba(249, 115, 22, 0.7)",
+      borderColor: "rgba(249, 115, 22, 1)",
+      borderWidth: 1,
+    },
+    {
+      label: "Vocabulary",
+      data: [avgVocab],
+      backgroundColor: "rgba(255, 187, 139, 0.7)",
+      borderColor: "rgba(255, 187, 139, 1)",
+      borderWidth: 1,
+    },
+  ],
+};
+
+  const scoreOptions: ChartOptions<"bar"> = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "right",
+      },
+      title: {
+        display: true,
+        font: {
+          size: 18,
+          weight: "bold",
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            let label = context.dataset.label || "";
+            if (label) {
+              label += ": ";
+            }
+            if (context.parsed.y !== null) {
+              label += `${context.parsed.y} scores`;
+            }
+            return label;
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 10,
+        title: {
+          display: true,
+        },
+      },
+      x: {
+        title: {
+          display: true,
+        },
+      },
+    },
+  };
 
   if (loading) {
     return <p>Loading class details...</p>;
@@ -171,7 +261,7 @@ export default function ClassDetail() {
         <div>
           <div className="flex items-center gap-4 mb-1">
             <h1 className="text-3xl font-bold">{course.name}</h1>
-            
+
             {role === "teacher" && (
               <button
                 onClick={handleClassEditClick}
@@ -182,7 +272,7 @@ export default function ClassDetail() {
               </button>
             )}
           </div>
-          
+
           <p className="text-lg text-gray-500">{course.description}</p>
         </div>
         <div className="bg-orange-600 text-lg font-bold text-white rounded-lg p-4 shadow-lg shadow-black/30">
@@ -213,82 +303,124 @@ export default function ClassDetail() {
             </div>
           ))}
 
-        {role === "teacher" &&
-          teacherCard.map((card, index) => (
-            <div
-              onClick={() => (window.location.href = card.href)}
-              key={index}
-              className="w-1/3 h-38 shadow-lg bg-white rounded-2xl px-8 py-6 flex flex-col justify-between border-2 border-white hover:border-orange-400 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <p className="text-xl">{card.title}</p>
-                {card.icon}
+        {role === "teacher" && (
+          <div className="flex gap-20 w-full items-end">
+            {teacherCard.map((card, index) => (
+              <div
+                onClick={() => (window.location.href = card.href)}
+                key={index}
+                className="w-1/3 h-38 shadow-lg bg-white rounded-2xl px-8 py-6 flex flex-col justify-between border-2 border-white hover:border-orange-400 transition-colors"
+              >
+                <div className="flex justify-between items-center">
+                  <p className="text-xl">{card.title}</p>
+                  {card.icon}
+                </div>
+                <p className="text-lg text-gray-500">{card.value}</p>
               </div>
-              <p className="text-lg text-gray-500">{card.value}</p>
+            ))}
+            <div className="w-2/3 h-fit pr-12 shadow-lg bg-white rounded-2xl flex flex-col justify-between border-2 border-white hover:border-orange-400 transition-colors">
+              <DynamicChart
+                type="bar"
+                data={scoreData}
+                options={scoreOptions}
+                className="w-full"
+              />
             </div>
-          ))}
+          </div>
+        )}
       </div>
       <div className="w-full rounded-2xl bg-slate-50 shadow mt-8 py-8 px-14">
         <div className="flex justify-between">
           <h1 className="text-lg text-gray-700 mb-4">Assignment</h1>
-          {role === "teacher" && <button onClick={handleAssignmentCreateClick} className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-4 cursor-pointer">Create Assignment</button>}
+          {role === "teacher" && (
+            <button
+              onClick={handleAssignmentCreateClick}
+              className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-4 cursor-pointer"
+            >
+              Create Assignment
+            </button>
+          )}
         </div>
 
-        {course.assignments.map((assignment) => (
-          <div
-            key={assignment.assignmentId}
-            className="flex justify-between items-center bg-white p-4 rounded shadow my-4" 
-          >
+        {course.assignments.map((assignment) => {
+          const statusColorMap = {
+            GRADED: "text-green-500",
+            SUBMITTED: "text-blue-500",
+            OVERDUE: "text-red-500",
+            MISSING: "text-gray-500",
+          };
+
+          type AssignmentStatus = keyof typeof statusColorMap;
+
+          const colorClass =
+            statusColorMap[assignment.status as AssignmentStatus] ||
+            "text-gray-400";
+
+          const statusText = assignment.status
+            ? assignment.status.charAt(0) +
+              assignment.status.slice(1).toLowerCase()
+            : "Pending";
+
+          return (
             <div
-              className="flex-grow cursor-pointer"
-              onClick={() => handleAssignmentClick(assignment.assignmentId)}
+              key={assignment.assignmentId}
+              className="flex justify-between items-center bg-white p-4 rounded shadow my-4"
             >
-              <div className="flex items-center gap-8">
-                <FaCircleCheck className={`text-2xl ${assignment.status==="GRADED"? "text-green-500": ""}`}></FaCircleCheck>
-                <h1 className={`text-lg ${assignment.status==="GRADED"? "text-green-500": ""}`}>{assignment.title}</h1>
-              </div>
-              <div className="flex gap-8 mt-4 items-center border-t border-gray-200 pt-2 w-2/3">
-                <div className="flex items-center">
-                  <FaRegClock className="text-gray-500"></FaRegClock>
-                  <p className="ml-2 text-gray-500">
-                    Opened: {new Date(assignment.openDate).toLocaleString()}
+              <div
+                className="flex-grow cursor-pointer"
+                onClick={() => handleAssignmentClick(assignment.assignmentId)}
+              >
+                <div className="flex items-center gap-8">
+                  <FaCircleCheck className={`text-2xl ${colorClass}`} />
+                  <h1 className={`text-lg ${colorClass}`}>
+                    {assignment.title}
+                  </h1>
+                </div>
+                <div className="flex gap-8 mt-4 items-center border-t border-gray-200 pt-2 w-2/3">
+                  <div className="flex items-center">
+                    <FaRegClock className="text-gray-500"></FaRegClock>
+                    <p className="ml-2 text-gray-500">
+                      Opened: {new Date(assignment.openDate).toLocaleString()}
+                    </p>
+                  </div>
+                  <p className="ml-2 text-red-500">
+                    Due: {new Date(assignment.deadline).toLocaleString()}
                   </p>
                 </div>
-                <p className="ml-2 text-red-500">
-                  Due: {new Date(assignment.deadline).toLocaleString()}
+              </div>
+
+              {role === "student" && assignment.status && (
+                <p className={`text-xl font-bold ${colorClass}`}>
+                  {statusText}
                 </p>
-              </div>
+              )}
+
+              {role === "teacher" && (
+                <div className="flex gap-4 pl-4">
+                  {" "}
+                  <button
+                    onClick={(e) =>
+                      handleAssignmentEditClick(e, assignment.assignmentId)
+                    }
+                    className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-orange-100 hover:text-orange-600 transition-colors"
+                    title="Edit Assignment"
+                  >
+                    <FaPencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) =>
+                      handleAssignmentDeleteClick(e, assignment.assignmentId)
+                    }
+                    className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-colors"
+                    title="Delete Assignment"
+                  >
+                    <FaTrash className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
-
-            {role === "student" && assignment.status === "GRADED" &&(
-              <p className="text-green-500 text-xl font-bold">Graded</p>
-            )}
-
-            {role === "teacher" && (
-              <div className="flex gap-4 pl-4">
-                {" "}
-                <button
-                  onClick={(e) =>
-                    handleAssignmentEditClick(e, assignment.assignmentId)
-                  }
-                  className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-orange-100 hover:text-orange-600 transition-colors"
-                  title="Edit Assignment"
-                >
-                  <FaPencil className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={(e) =>
-                    handleAssignmentDeleteClick(e, assignment.assignmentId)
-                  }
-                  className="cursor-pointer p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-colors"
-                  title="Delete Assignment"
-                >
-                  <FaTrash className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {showDeleteModal && (

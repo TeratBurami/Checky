@@ -7,18 +7,17 @@ import {
   FaFileWord,
   FaFileImage,
   FaFileAlt,
-  FaSpinner, // (ใหม่)
-  FaCheckCircle, // (ใหม่)
+  FaSpinner,
+  FaCheckCircle,
 } from "react-icons/fa";
 
 import {FaFileLines} from 'react-icons/fa6'
 
 import { useState, useEffect, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { SubmissionDetail } from "@/lib/types"; // (ใหม่)
-import { motion, AnimatePresence } from "framer-motion"; // (ใหม่)
+import { SubmissionDetail } from "@/lib/types";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Helper (จากไฟล์เดิม)
 const getFileIcon = (fileName: string) => {
   const ext = fileName.split(".").pop()?.toLowerCase();
   if (ext === "pdf") return <FaFilePdf className="text-red-500 text-3xl" />;
@@ -29,41 +28,29 @@ const getFileIcon = (fileName: string) => {
   return <FaFileLines className="text-gray-400 text-3xl" />;
 };
 
-// --- Component หลัก ---
 export default function GradeSubmissionPage() {
   const [submission, setSubmission] = useState<SubmissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // State สำหรับฟอร์มตรวจงาน
   const [score, setScore] = useState("");
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-
   const params = useParams();
   const router = useRouter();
   const classId = params.class_id as string;
   const assignmentId = params.assignment_id as string;
   const studentId = params.student_id as string;
-
-
-  // (สำคัญ) API Base URL (ควรย้ายไป .env)
-  // สังเกตว่าผมใช้ /api/v1 (ไม่มี /class) สำหรับ endpoint ที่เป็น root
   const API_BASE_URL = "http://localhost:3000/api/v1/class";
 
-  // --- 1. Fetch ข้อมูล Submission ---
   useEffect(() => {
     if (!studentId) return;
 
     const fetchSubmissionDetail = async () => {
       setLoading(true);
       try {
-        // (สำคัญ) เราจะเรียก API ใหม่ที่เราสมมติว่าได้สร้างขึ้น
-        // ถ้าคุณตั้ง prefix ของ submission.js เป็น /class
-        // ให้เปลี่ยน URL นี้เป็น `${API_BASE_URL}/class/submission/${submissionId}`
         const response = await fetch(
-          `${API_BASE_URL}/${assignmentId}/student/${studentId}`, // <== (Endpoint ที่สมมติขึ้น)
+          `${API_BASE_URL}/${assignmentId}/student/${studentId}`,
           { credentials: "include" }
         );
 
@@ -72,8 +59,6 @@ export default function GradeSubmissionPage() {
         }
         const data: SubmissionDetail = await response.json();
         setSubmission(data);
-
-        // ตั้งค่าเริ่มต้นให้ฟอร์ม
         setScore(data.score?.toString() || "");
         setComment(data.teacher_comment || "");
       } catch (e: any) {
@@ -87,7 +72,6 @@ export default function GradeSubmissionPage() {
     fetchSubmissionDetail();
   }, [studentId]);
 
-  // --- 2. ฟังก์ชันส่งคะแนน (Grade) ---
   const handleGradeSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -95,16 +79,14 @@ export default function GradeSubmissionPage() {
     setError(null);
 
     try {
-      // (ถูกต้อง) ใช้ API 'grading' ที่คุณให้มา
-      // PUT /api/v1/class/:submission_id/grade
       const response = await fetch(
-        `${API_BASE_URL}/${submission?.submission_id}/grade`, // <== (ใช้ Path ที่คุณระบุ)
+        `${API_BASE_URL}/${submission?.submission_id}/grade`,
         {
           method: "PUT",
-          credentials: "include", // สำหรับ authenticateJWT
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            score: score === "" ? null : Number(score), // แปลงกลับเป็น number (หรือ null)
+            score: score === "" ? null : Number(score),
             teacher_comment: comment,
           }),
         }
@@ -117,10 +99,9 @@ export default function GradeSubmissionPage() {
 
       setSubmitSuccess(true);
 
-      // กลับไปหน้า Assignment หลังตรวจเสร็จ
       setTimeout(() => {
         router.push(`/class/${classId}/assignment/${assignmentId}`);
-      }, 1500); // หน่วงเวลาเล็กน้อยให้เห็นติ๊กถูก
+      }, 1500);
     } catch (err: any) {
       console.error("Grade submission error:", err);
       setError(err.message);
@@ -129,7 +110,6 @@ export default function GradeSubmissionPage() {
     }
   };
 
-  // --- 3. Render Loading/Error ---
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -152,7 +132,6 @@ export default function GradeSubmissionPage() {
     );
   }
 
-  // --- 4. Render หน้าหลัก (Main) ---
   return (
     <AnimatePresence>
       <motion.div
@@ -161,7 +140,6 @@ export default function GradeSubmissionPage() {
         transition={{ duration: 0.5 }}
         className="max-w-7xl mx-auto p-4 md:p-8"
       >
-        {/* --- Back Button --- */}
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-gray-500 hover:text-orange-600 transition-colors mb-6"
@@ -170,7 +148,6 @@ export default function GradeSubmissionPage() {
           Back to Assignment
         </button>
 
-        {/* --- Header (ใช้ข้อมูลที่ Join มา) --- */}
         <motion.div
           layout
           className="bg-white shadow-lg rounded-xl p-6 mb-8 border-l-4 border-orange-400"
@@ -190,16 +167,13 @@ export default function GradeSubmissionPage() {
           </p>
         </motion.div>
 
-        {/* --- Main Grid (Work + Grade Form) --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* --- Column 1: Student's Work (Span 2) --- */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             className="lg:col-span-2 space-y-6"
           >
-            {/* --- Files Card --- */}
             <div className="bg-white shadow-lg rounded-xl p-6">
               <h2 className="text-2xl font-semibold text-gray-800 border-b pb-3 mb-4">
                 Submitted Files
@@ -232,11 +206,9 @@ export default function GradeSubmissionPage() {
                         </span>
                       </div>
 
-                      {/* (ถูกต้อง) Download Button (ใช้ <a href>) */}
-                      {/* API นี้จะ force download (res.download()) */}
                       <a
                         href={`${API_BASE_URL}/download/${file.file_id}`}
-                        target="_blank" // เปิดในแท็บใหม่ (จำเป็นสำหรับการดาวน์โหลด)
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex-shrink-0 flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium px-3 py-1 rounded-full bg-blue-100/60 hover:bg-blue-100 transition-all"
                       >
@@ -250,7 +222,6 @@ export default function GradeSubmissionPage() {
               )}
             </div>
 
-            {/* --- Content Card (ถ้ามี) --- */}
             {submission.content && (
               <div className="bg-white shadow-lg rounded-xl p-6">
                 <h2 className="text-2xl font-semibold text-gray-800 border-b pb-3 mb-4">
@@ -265,7 +236,6 @@ export default function GradeSubmissionPage() {
             )}
           </motion.div>
 
-          {/* --- Column 2: Grading Form (Span 1) --- */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -274,13 +244,12 @@ export default function GradeSubmissionPage() {
           >
             <form
               onSubmit={handleGradeSubmit}
-              className="bg-white shadow-lg rounded-xl p-6 sticky top-24" // Sticky!
+              className="bg-white shadow-lg rounded-xl p-6 sticky top-24"
             >
               <h2 className="text-2xl font-semibold text-gray-800 border-b pb-3 mb-4">
                 Grade Submission
               </h2>
 
-              {/* --- Score Input --- */}
               <div className="mb-4">
                 <label
                   htmlFor="score"
@@ -299,7 +268,6 @@ export default function GradeSubmissionPage() {
                 />
               </div>
 
-              {/* --- Comment Textarea --- */}
               <div className="mb-6">
                 <label
                   htmlFor="comment"
@@ -318,7 +286,6 @@ export default function GradeSubmissionPage() {
                 />
               </div>
 
-              {/* --- Submit Button --- */}
               <button
                 type="submit"
                 disabled={isSubmitting || submitSuccess}
@@ -344,7 +311,6 @@ export default function GradeSubmissionPage() {
                   : "Submit Grade"}
               </button>
 
-              {/* --- Error Message --- */}
               {error && (
                 <p className="text-red-600 text-center mt-4 text-sm">
                   {error}

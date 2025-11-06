@@ -195,14 +195,22 @@ router.get("/:classId/assignment/:assignmentId", authenticateJWT(['student', 'te
   const { role, userid } = req.user;
 
   try {
-    // 1. Base assignment info (ไม่เปลี่ยนแปลง)
+    // 1. Base assignment info (include deadline)
     const { rows: assignmentRows } = await db.query(
-      `SELECT a.assignment_id AS "assignmentId",
-              a.title, a.description, a.deadline, a.rubric_id AS "rubricId"
+      `SELECT 
+          a.assignment_id AS "assignmentId",
+          a.title, 
+          a.description, 
+          a.deadline, 
+          a.created_at AS "createdAt",
+          a.rubric_id AS "rubricId",
+          r.name AS "rubricName"
        FROM assignments a
+       LEFT JOIN rubrics r ON a.rubric_id = r.rubric_id
        WHERE a.assignment_id = $1 AND a.class_id = $2`,
       [assignmentId, classId]
     );
+
     if (assignmentRows.length === 0)
       return res.status(404).json({ error: "Assignment not found" });
 
@@ -210,7 +218,7 @@ router.get("/:classId/assignment/:assignmentId", authenticateJWT(['student', 'te
 
     // ---------- STUDENT ----------
     if (role === 'student') {
-      // Rubric info with criteria + levels (ไม่เปลี่ยนแปลง)
+      // Rubric info
       const rubricRes = await db.query(
         `SELECT r.rubric_id AS "rubricId", r.name,
           json_agg(
