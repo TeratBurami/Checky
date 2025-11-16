@@ -13,7 +13,7 @@ export default function MyDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timeframe, setTimeframe] = useState<Timeframe>('30d');
+  const [timeframe, setTimeframe] = useState<Timeframe>('all');
 
   useEffect(() => {
     const fetchData = async () => {

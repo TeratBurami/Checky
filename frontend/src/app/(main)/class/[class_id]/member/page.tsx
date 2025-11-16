@@ -114,7 +114,7 @@ export default function MemberPage() {
       legend: { position: "top" },
       title: { 
         display: true,
-        text: 'Class Score Distribution (Mock Data)',
+        text: 'Class Score Distribution',
         font: { size: 18, weight: "bold" } 
       },
     },
@@ -160,7 +160,7 @@ export default function MemberPage() {
 
         {/* --- Chart --- */}
         <div className="mb-8">
-           <h2 className="text-xl font-semibold mb-3">Student Score Distribution (Mock)</h2>
+           <h2 className="text-xl font-semibold mb-3">Student Score Distribution</h2>
           <DynamicChart
             type="bar"
             data={scoreData}

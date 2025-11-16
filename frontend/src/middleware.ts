@@ -8,6 +8,7 @@ const studentOnlyRoutes = [
   '/peer-review',
   '/ai-analysis',
   '/performance',
+  '/exercise',
 ];
 
 const teacherOnlyRoutes = [
