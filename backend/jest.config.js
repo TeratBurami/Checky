@@ -8,7 +8,6 @@ export default {
     "**/*.js",
     "!babel.config.js",
     "!jest.config.js",
-    "!index.js",
     "!**/node_modules/**",
     "!**/tests/**",
     "!**/coverage/**"

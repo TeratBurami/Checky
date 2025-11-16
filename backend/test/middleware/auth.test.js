@@ -1,7 +1,7 @@
 import request from "supertest";
 import express from "express";
 import jwt from "jsonwebtoken";
-import { authenticateJWT } from "../middleware/auth.js";
+import { authenticateJWT } from "../../middleware/auth.js";
 
 jest.mock("jsonwebtoken");
 

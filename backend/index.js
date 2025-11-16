@@ -9,8 +9,8 @@ dotenv.config();
 const app = express();
 
 const corsOptions = {
-  origin: "http://localhost:3001", 
-  credentials: true, 
+  origin: "http://localhost:3001",
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
@@ -22,4 +22,9 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/v1", apiRoutes);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+export default app;
