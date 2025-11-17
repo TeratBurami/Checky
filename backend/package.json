@@ -2,11 +2,11 @@
   "name": "backend",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "jest",
     "test:coverage": "NODE_ENV=test jest --coverage",
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

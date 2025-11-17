@@ -132,7 +132,7 @@ router.get("/", authenticateJWT(["student", "teacher"]), async (req, res) => {
 
     res.status(400).json({ error: "Invalid role" });
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 });

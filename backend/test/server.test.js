@@ -1,6 +1,6 @@
 // test/index.test.js
 import request from "supertest";
-import expressApp from "../index.js";
+import expressApp from "../server.js";
 
 // Mock the database connection so tests don't actually connect
 jest.mock("../config/db.js", () => ({
