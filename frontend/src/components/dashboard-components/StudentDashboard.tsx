@@ -79,6 +79,8 @@ export default function StudentDashboard({ data }: { data: DashboardData }) {
     });
   };
 
+  const firstWeakness = data.mainWeaknesses.length > 0 ? data.mainWeaknesses[0] : null;
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -133,6 +135,41 @@ export default function StudentDashboard({ data }: { data: DashboardData }) {
             </div>
           </div>
 
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
+              <FaBook /> Daily Review Exercise
+            </h2>
+            {firstWeakness ? (
+              <div className="mt-3">
+                {firstWeakness.dailyExercise.content && (
+                  <p className="text-gray-700 bg-gray-100 p-3 rounded-md mt-3 italic">
+                    {firstWeakness.dailyExercise.content}
+                  </p>
+                )}
+                <p className="text-gray-700 mt-3 text-lg">{firstWeakness.dailyExercise.question}</p>
+                <Link 
+                  href={{
+                    pathname: '/exercise',
+                    query: {
+                      topic: firstWeakness.topic,
+                      content: firstWeakness.dailyExercise.content || '',
+                      question: firstWeakness.dailyExercise.question
+                    }
+                  }}
+                  className="mt-4 inline-block px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-all"
+                >
+                  Start Practice
+                </Link>
+              </div>
+            ) : (
+              <div className="text-center mt-4 text-gray-500">
+                <FaCheck className="text-3xl text-green-500 mx-auto" />
+                <p className="mt-2 font-semibold">Great job!</p>
+                <p className="text-sm">No daily exercise needed right now.</p>
+              </div>
+            )}
+          </div>
+          <PracticeQuestionSuggestions weaknesses={data.mainWeaknesses} />
         </div>
 
         <div className="lg:col-span-1 space-y-6">
@@ -142,13 +179,44 @@ export default function StudentDashboard({ data }: { data: DashboardData }) {
               <FaThumbsUp /> Top Strengths
             </h2>
             <ul className="mt-4 space-y-4">
-              {data.topStrengths.map((item) => (
+              {data.topStrengths.slice(0, 3).map((item) => (
                 <li key={item.topic}>
                   <strong className="text-gray-800">{item.topic}</strong>
                   <p className="text-gray-600 text-sm">{item.description}</p>
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <h2 className="text-xl font-semibold text-red-600 flex items-center gap-2">
+              <FaThumbsDown /> Top Weaknesses
+            </h2>
+            {data.mainWeaknesses.length > 0 ? (
+              <ul className="mt-4 space-y-5">
+                {data.mainWeaknesses.slice(0, 2).map((weakness) => (
+                  <li key={weakness.topic} className="pb-4 border-b border-gray-100 last:border-b-0">
+                    <strong className="text-gray-800">{weakness.topic}</strong>
+                    <p className="text-gray-600 text-sm mt-1">{weakness.description}</p>
+                    <a 
+                      href={weakness.nextLearningStep.resource.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 font-semibold rounded-lg hover:bg-blue-200 transition-all text-sm"
+                    >
+                      <FaLightbulb />
+                      Next Learning Step
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-center mt-4 text-gray-500">
+                <FaCheck className="text-3xl text-green-500 mx-auto" />
+                <p className="mt-2 font-semibold">Great job!</p>
+                <p className="text-sm">No major weaknesses detected.</p>
+              </div>
+            )}
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -169,73 +237,89 @@ export default function StudentDashboard({ data }: { data: DashboardData }) {
           
         </div>
 
-        <div className="lg:col-span-3 mt-4">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">Action Plan</h2>
-          {data.mainWeaknesses.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {data.mainWeaknesses.map(weakness => (
-                <WeaknessCard key={weakness.topic} weakness={weakness} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center bg-white p-10 rounded-xl shadow-lg">
-              <FaCheck className="text-5xl text-green-500 mx-auto" />
-              <h3 className="text-2xl font-semibold mt-4">Great job!</h3>
-              <p className="text-gray-600 text-lg">No major weaknesses detected in this timeframe. Keep up the good work!</p>
-            </div>
-          )}
-        </div>
-
       </motion.div>
     </AnimatePresence>
   );
 }
 
+function PracticeQuestionSuggestions({ weaknesses }: { weaknesses: MainWeakness[] }) {
+  const [activeTopic, setActiveTopic] = useState(weaknesses[0]?.topic || null);
 
-function WeaknessCard({ weakness }: { weakness: MainWeakness }) {
+  if (weaknesses.length === 0) {
+    return null;
+  }
+
+  const activeWeakness = weaknesses.find(w => w.topic === activeTopic);
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
+      transition={{ delay: 0.1 }}
       className="bg-white rounded-xl shadow-lg overflow-hidden"
     >
-      <div className="p-6 border-l-4 border-red-500">
-        <h3 className="text-2xl font-bold text-red-600 flex items-center gap-2">
-          <FaThumbsDown /> Focus Area: {weakness.topic}
-        </h3>
-        <p className="text-gray-700 text-lg mt-2">{weakness.description}</p>
-      </div>
-      
-      <div className="p-6 bg-blue-50 border-t border-gray-100">
-        <h4 className="text-xl font-semibold text-blue-800 flex items-center gap-2">
-          <FaLightbulb /> Next Learning Step
-        </h4>
-        <p className="text-gray-700 mt-2">{weakness.nextLearningStep.description}</p>
-        <a 
-          href={weakness.nextLearningStep.resource.url} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all"
-        >
-          {getResourceIcon(weakness.nextLearningStep.resource.type)}
-          {weakness.nextLearningStep.resource.title}
-        </a>
+      <div className="p-6">
+        <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
+          <FaLightbulb className="text-yellow-500" />
+          Practice Question Suggestions
+        </h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Explore other topics you can practice.
+        </p>
       </div>
 
-      <div className="p-6 bg-gray-50 border-t border-gray-100">
-        <h4 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-          <FaBook /> Daily Review Exercise
-        </h4>
-        {weakness.dailyExercise.content && (
-           <p className="text-gray-700 bg-gray-100 p-3 rounded-md mt-3 italic">
-             {weakness.dailyExercise.content}
-           </p>
+      <div className="border-b border-gray-200 px-6">
+        <nav className="-mb-px flex gap-4" aria-label="Tabs">
+          {weaknesses.map((weakness) => (
+            <button
+              key={weakness.topic}
+              onClick={() => setActiveTopic(weakness.topic)}
+              className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
+                activeTopic === weakness.topic
+                  ? 'border-blue-500 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' 
+              }`}
+            >
+              {weakness.topic}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      <div className="p-6 bg-gray-50">
+        {activeWeakness ? (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeWeakness.topic} 
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.2 }}
+            >
+              <p className="text-lg text-gray-800 font-medium">
+                Ready to practice <span className="font-bold text-blue-600">{activeWeakness.topic}</span>?
+              </p>
+              <p className="text-gray-600 mt-1">
+                This quiz includes short answer and multiple-choice questions to test your skills.
+              </p>
+              
+              <Link 
+                href={{
+                  pathname: '/practice',
+                  query: {
+                    topic: activeWeakness.topic,
+                  }
+                }}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all text-sm"
+              >
+                <FaPenRuler />
+                Start Quiz on {activeWeakness.topic}
+              </Link>
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <p className="text-gray-500">Please select a topic to practice.</p>
         )}
-        <p className="text-gray-700 mt-3">{weakness.dailyExercise.question}</p>
-        <button className="mt-4 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300">
-          Start Practice
-        </button>
       </div>
     </motion.div>
   );
