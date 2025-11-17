@@ -9,6 +9,7 @@ const studentOnlyRoutes = [
   '/ai-analysis',
   '/performance',
   '/exercise',
+  '/practice',
 ];
 
 const teacherOnlyRoutes = [
@@ -112,7 +113,6 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-// --- 6. Config (ไม่เปลี่ยนแปลง) ---
 export const config = {
   matcher: '/((?!api|_next/static|_next/image|.*\\.(?:png|jpg|jpeg|gif|ico)$).*)',
 };

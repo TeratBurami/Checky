@@ -3,46 +3,37 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { FaPenRuler, FaArrowLeft } from 'react-icons/fa6';
+import { FaBook, FaArrowLeft } from 'react-icons/fa6';
 import { FaCheckCircle } from 'react-icons/fa';
 
-/**
- * คอมโพเนนต์หลักที่แสดงเนื้อหาแบบฝึกหัด
- * เราต้องแยกออกมาเพื่อให้ใช้ useSearchParams ได้ภายใต้ <Suspense>
- */
-function PracticePageContent() {
+function ExercisePageContent() {
   const searchParams = useSearchParams();
   const [answer, setAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
-
-  // ดึงข้อมูลจาก URL
   const topic = searchParams.get('topic');
   const content = searchParams.get('content');
   const question = searchParams.get('question');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!answer) return; // ไม่ทำอะไรถ้าคำตอบว่างเปล่า
+    if (!answer) return;
 
     setSubmitted(true);
-    // ในแอปจริง คุณอาจจะส่ง `answer` นี้ไปที่ API เพื่อประเมิน
-    console.log("Submitted Answer:", { topic, question, answer });
-    // alert("Your practice has been submitted!");
+    console.log("Submitted Exercise:", { topic, question, answer });
   };
 
   return (
     <div className="max-w-3xl mx-auto p-6 md:p-8 bg-white rounded-xl shadow-2xl mt-10 border-t-4 border-blue-600">
       <Link href="/performance" className="inline-flex items-center gap-2 text-blue-600 hover:underline mb-6 text-sm font-medium">
         <FaArrowLeft />
-        Back to Dashboard
+        Back to Performance
       </Link>
       
       <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3 mb-4">
-        <FaPenRuler className="text-green-500" />
-        Practice: {topic || 'Exercise'}
+        <FaBook className="text-blue-500" />
+        Daily Exercise: {topic || 'Review'}
       </h1>
 
-      {/* 1. ส่วนเนื้อหาทบทวน (ถ้ามี) */}
       {content && (
         <div className="mt-6 p-4 bg-gray-100 rounded-lg border border-gray-200">
           <h3 className="font-semibold text-gray-800 mb-2">Review This Concept:</h3>
@@ -50,7 +41,6 @@ function PracticePageContent() {
         </div>
       )}
 
-      {/* 2. ส่วนคำถามและแบบฟอร์ม */}
       <form onSubmit={handleSubmit} className="mt-6">
         <label htmlFor="answer" className="block text-xl font-semibold text-gray-700">
           Your Task:
@@ -64,25 +54,24 @@ function PracticePageContent() {
           placeholder="Type your answer here..."
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
-          disabled={submitted} // ปิดการแก้ไขเมื่อส่งแล้ว
+          disabled={submitted}
         />
 
-        {/* 3. ปุ่ม Submit หรือข้อความเมื่อส่งแล้ว */}
         {submitted ? (
           <div className="mt-6 p-4 bg-green-50 text-green-700 rounded-lg border border-green-200 flex items-center gap-3">
             <FaCheckCircle className="text-2xl" />
             <div>
               <h4 className="font-bold">Submitted Successfully!</h4>
-              <p>Great job on completing your practice.</p>
+              <p>Great job on completing your daily exercise.</p>
             </div>
           </div>
         ) : (
           <button 
             type="submit" 
             className="mt-6 w-full px-6 py-3 bg-blue-600 text-white font-semibold text-lg rounded-lg hover:bg-blue-700 transition-all disabled:bg-gray-400"
-            disabled={!answer} // ปิดปุ่มถ้ายังไม่พิมพ์
+            disabled={!answer}
           >
-            Submit Practice
+            Submit Exercise
           </button>
         )}
       </form>
@@ -90,15 +79,10 @@ function PracticePageContent() {
   );
 }
 
-/**
- * นี่คือ Page component หลัก
- * เราต้องใช้ <Suspense> ล้อมรอบคอมโพเนนต์ที่ใช้ useSearchParams
- * ตามกฎของ Next.js App Router
- */
-export default function PracticePage() {
+export default function DailyExercisePage() {
   return (
     <Suspense fallback={<div className="text-center p-10">Loading exercise...</div>}>
-      <PracticePageContent />
+      <ExercisePageContent />
     </Suspense>
   );
 }
