@@ -228,6 +228,7 @@ export default function AssignmentCreate() {
 
           <motion.div variants={fieldVariant} className="pt-4">
             <button
+              id="create-assignment-button"
               type="submit"
               disabled={isSubmitting || success}
               className={`w-full font-bold rounded-lg p-4 text-white text-lg transition-all duration-300

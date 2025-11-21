@@ -1,0 +1,54 @@
+
+> selenium-tests@1.0.0 test
+> mocha *.test.js --timeout 60000
+
+
+
+  System Test Suite 1: Student Assignment Submission Workflow
+    ✔ Test Case 1.1: Student Login (800ms)
+Joining class with code: TESAT9EL
+    ✔ Test Case 1.2: Navigate to Class (2596ms)
+    ✔ Test Case 1.3: View Assignment Details (321ms)
+    ✔ Test Case 1.4: Submit Assignment with Text Content (408ms)
+    ✔ Test Case 1.5: Edit Submission and Add Files (301ms)
+    ✔ Test Case 1.6: View Submission Confirmation (412ms)
+    ✔ Test Case 1.7: Logout (255ms)
+
+  System Test Suite 2: Teacher Assignment Management Workflow
+    ✔ Test Case 2.1: Teacher Login (554ms)
+Created rubric: Test Rubric 1763725395613
+Rubric may not be visible in list yet, but continuing with stored name
+    ✔ Test Case 2.2: Create a New Rubric (9767ms)
+    1) Test Case 2.2b: Create a New Class
+    2) Test Case 2.3: Create Assignment with Rubric
+Skipping detailed grading tests until student submission is made.
+    ✔ Test Case 2.4: View Student Submissions
+    3) Test Case 2.9: Logout
+
+
+  10 passing (47s)
+  3 failing
+
+  1) System Test Suite 2: Teacher Assignment Management Workflow
+       Test Case 2.2b: Create a New Class:
+     TimeoutError: Waiting for URL to match /\/class\/\d+/
+Wait timed out after 10065ms
+      at /Users/teratburami/Documents/GitHub/Checky/selenium-tests/node_modules/selenium-webdriver/lib/webdriver.js:929:22
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+  2) System Test Suite 2: Teacher Assignment Management Workflow
+       Test Case 2.3: Create Assignment with Rubric:
+     TimeoutError: Waiting for URL to match /\/class\/\d+/
+Wait timed out after 10076ms
+      at /Users/teratburami/Documents/GitHub/Checky/selenium-tests/node_modules/selenium-webdriver/lib/webdriver.js:929:22
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+  3) System Test Suite 2: Teacher Assignment Management Workflow
+       Test Case 2.9: Logout:
+     TimeoutError: Waiting for element to be located By(css selector, *[id="logout-button"])
+Wait timed out after 5003ms
+      at /Users/teratburami/Documents/GitHub/Checky/selenium-tests/node_modules/selenium-webdriver/lib/webdriver.js:929:22
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+
+
