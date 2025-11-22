@@ -32,7 +32,6 @@ router.get("/admin/all", async (req, res) => {
 router.get("/", authenticateJWT("student", "teacher"), async (req, res) => {
     try {
         const userId = req.user.userid;
-        console.log(req.user.userid);
         const { rows } = await db.query(
             `
                 SELECT 
@@ -48,8 +47,6 @@ router.get("/", authenticateJWT("student", "teacher"), async (req, res) => {
             `,
             [userId]
         );
-        console.log(rows);
-        
         res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
