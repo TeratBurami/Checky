@@ -178,6 +178,14 @@ describe("User API Routes", () => {
     expect(res.body).toEqual([{ userid: 1, firstName: "John" }]);
   });
 
+  // GET all uesr error handling
+  it("should handle get users errors", async () => {
+    db.query.mockRejectedValue(new Error("DB error"));
+    const res = await request(app).get("/api/v1/auth");
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("DB error");
+  });
+
   // GET user by ID
   it("should get user by ID", async () => {
     db.query.mockResolvedValue({ rows: [{ userid: 1, firstName: "John" }] });
