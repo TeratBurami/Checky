@@ -8,8 +8,15 @@ const router = Router();
 
 // CREATE user
 router.post("/register", async (req, res) => {
-  const { firstName, lastName, email, password, role } = req.body;
   try {
+    const { firstName, lastName, email, password, role } = req.body;
+    if (!firstName || !lastName || !email || !password || !role) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    if(email.indexOf('@') === -1){
+      return  res.status(400).json({ error: "Invalid email format" });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
     await db.query(
       "INSERT INTO users (firstName, lastName, email, password, role) VALUES ($1,$2,$3,$4,$5) RETURNING *",
@@ -101,7 +108,6 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", authenticateJWT(["student", "teacher"]), async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
   const userId = parseInt(req.params.id);
-  console.log(req.user);
   if (req.user.userid !== userId) {
     return res.status(403).json({ error: "Forbidden: can only update your own account" });
   }

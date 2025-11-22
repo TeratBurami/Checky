@@ -1,21 +1,18 @@
-// test/notification.test.js
 import request from "supertest";
 import express from "express";
+import { authenticateJWT } from "../../../middleware/auth.js";
 
-// 1️⃣ MOCK db BEFORE importing routes
 jest.mock("../../../config/db.js", () => ({
   query: jest.fn(),
 }));
 
-// 2️⃣ MOCK authenticateJWT BEFORE importing routes
-jest.mock("../../../middleware/auth.js", () => ({
-  authenticateJWT: jest.fn((...roles) => (req, res, next) => {
-    req.user = { userid: 1, role: roles[0] || "student" };
+jest.mock('../../../middleware/auth.js', () => ({
+  authenticateJWT: jest.fn((roles = []) => (req, res, next) => {
+    req.user = { userid: 1, role: "student" };
     next();
   }),
 }));
 
-// 3️⃣ NOW import modules
 import notificationRoutes from "../../../routes/apis/notification.js";
 import db from "../../../config/db.js";
 
@@ -40,7 +37,7 @@ describe("Notification Routes", () => {
             link: "/",
             isRead: false,
             createdAt: new Date(),
-          },
+          }
         ],
       });
 
@@ -63,22 +60,24 @@ describe("Notification Routes", () => {
 
   describe("GET /api/notifications/", () => {
     it("should return notifications for a user", async () => {
-      db.query.mockResolvedValueOnce({
-        rows: [
-          {
-            notificationId: 2,
-            type: "NEW_ASSIGNMENT",
-            message: "User message",
-            link: "/",
-            isRead: false,
-            createdAt: new Date(),
-          },
-        ],
+      authenticateJWT.mockImplementationOnce(() => (req, res, next) => {
+        req.user = { userid: 1, role: "student" };
+        next();
+      });
+
+      db.query.mockImplementationOnce((query, params) => {
+        const allRows = [
+        { notificationId: 2, userId: 1, type: "NEW_ASSIGNMENT", message: "User message", link: "/", isRead: false, createdAt: new Date() },
+        { notificationId: 3, userId: 2, type: "NEW_ASSIGNMENT", message: "Another message", link: "/", isRead: true, createdAt: new Date() },
+        { notificationId: 4, userId: 1, type: "GRADE_POSTED", message: "Grade posted", link: "/", isRead: true, createdAt: new Date() },
+      ];
+      return { rows: allRows.filter(r => r.userId === params[0]) };
       });
 
       const res = await request(app).get("/api/notifications/");
 
       expect(res.status).toBe(200);
+      expect(res.body.length).toBe(2);
       expect(res.body[0].message).toBe("User message");
     });
 
