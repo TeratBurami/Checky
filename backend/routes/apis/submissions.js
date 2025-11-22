@@ -131,32 +131,66 @@ router.get("/:assignment_id/submission/all", async (req, res) => {
 });
 
 // ----------------------
-// Get single student's submission with files
+// Get single student's submission with files + extra info
 // ----------------------
 router.get("/:assignment_id/student/:student_id", async (req, res) => {
   try {
     const { assignment_id, student_id } = req.params;
 
-    const { rows: submissions } = await db.query(
-      `SELECT * FROM submissions WHERE assignment_id=$1 AND student_id=$2`,
+    const { rows } = await db.query(
+      `
+      SELECT 
+        s.submission_id,
+        s.assignment_id,
+        s.student_id,
+        s.content,
+        s.submitted_at,
+        s.score,
+        s.teacher_comment,
+        u.firstName AS student_first,
+        u.lastName AS student_last,
+        a.title AS assignment_title
+      FROM submissions s
+      JOIN users u ON s.student_id = u.userID
+      JOIN assignments a ON s.assignment_id = a.assignment_id
+      WHERE s.assignment_id = $1 AND s.student_id = $2
+      `,
       [assignment_id, student_id]
     );
 
-    if (!submissions.length) return res.status(404).json({ error: "Not found" });
+    if (!rows.length) return res.status(404).json({ error: "Not found" });
 
-    const submission = submissions[0];
+    const submission = rows[0];
 
     const { rows: files } = await db.query(
-      `SELECT file_id, filename, url FROM submission_files WHERE submission_id=$1`,
+      `SELECT file_id, filename, url FROM submission_files WHERE submission_id = $1`,
       [submission.submission_id]
     );
 
-    submission.files = files;
-    res.json(submission);
+    const response = {
+      submission_id: submission.submission_id,
+      assignment_id: submission.assignment_id,
+      student_id: submission.student_id,
+      content: submission.content,
+      submitted_at: submission.submitted_at,
+      score: submission.score,
+      teacher_comment: submission.teacher_comment,
+      files,
+      studentInfo: {
+        firstName: submission.student_first,
+        lastName: submission.student_last,
+      },
+      assignmentInfo: {
+        title: submission.assignment_title,
+      },
+    };
+
+    res.json(response);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // Delete a single file from a submission
 router.delete("/:assignment_id/file/:file_id", authenticateJWT(["student"]), async (req, res) => {

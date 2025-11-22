@@ -1,8 +1,6 @@
-// PerformanceGrade.tsx
 import React, { FC } from 'react';
 import ReactSpeedometer, { Transition } from 'react-d3-speedometer'; 
 
-// ไอคอน Chevron (ลูกศรลง) สำหรับ Dropdown
 const ChevronDownIcon: FC = () => (
   <svg 
     width="16" 
@@ -29,7 +27,6 @@ const PerformanceGrade: FC = () => {
   return (
     <div className="bg-white rounded-xl w-full max-w-sm p-4">
       
-      {/* ส่วนหัว (Legend + Dropdown) */}
       <div className="flex justify-between items-center mb-2">
         <div className="flex items-center space-x-2">
           <div className="w-4 h-4 bg-[#F4CFA8] rounded-sm" />
@@ -43,7 +40,6 @@ const PerformanceGrade: FC = () => {
         </button>
       </div>
 
-      {/* ส่วนเกจ (Speedometer) */}
       <div className="w-full flex justify-center -mt-4 -mb-6">
         <ReactSpeedometer
           width={280}
@@ -72,7 +68,6 @@ const PerformanceGrade: FC = () => {
         />
       </div>
 
-      {/* ส่วนท้าย (Your Grade) */}
       <div className="text-center">
         <span className="text-gray-500 text-lg">Your Grade: </span>
         <span className="text-black font-bold text-2xl">{GRADE}</span>
