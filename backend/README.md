@@ -3,5 +3,5 @@
 
 ```
 npm install
-npx jest --coverage
+npx test
 ```
