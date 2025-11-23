@@ -52,7 +52,7 @@ INSERT INTO users (firstName, lastName, email, password, role) VALUES
 INSERT INTO classes (name, description, classCode, teacherID) VALUES
 ('Introduction to Literature', 'Exploration of literary themes, genres, and critical approaches', 'LIT101', 3), -- Class 1 (Alan - Jane's class)
 ('Advanced Academic Writing', 'Deep dive into academic writing and research methodologies', 'ENG201', 3), -- Class 2 (Alan)
-('Historical Investigation Fundamentals', 'Introduction to historical research methods and sources', 'HIS101', 4), -- Class 3 (Thanapon - Jane's class)
+('Historical Investigation Fundamentals', 'Introduction to historical research methods and sources', 'HIS101', 3), -- Class 3 (Thanapon - Jane's class)
 ('Religious Studies 101', 'Introduction to major world religions and their impacts on society', 'REL101', 4), -- Class 4 (Thanapon)
 ('Suffering Engineering', 'Be more waterfall and crush all customer.', 'SUFSD666', 6); -- Class 5 (Emily)
 
@@ -105,7 +105,6 @@ INSERT INTO rubric_levels (criterion_id, level_name, score, description) VALUES
 INSERT INTO assignments (class_id, title, description, deadline, rubric_id) VALUES
 (1, 'Essay on Modern Poetry', 'Write a 500-word essay analyzing a modern poem.', '2025-11-15 23:59:59', 1), -- Assignment 1 (Class 1)
 (2, 'Final Project Proposal', 'Submit a one-page proposal for your final project.', '2025-12-01 23:59:59', 1), -- Assignment 2 (Class 2)
-(3, 'Historical Sources Review', 'Analyze three primary sources from the 18th century.', '2025-10-30 23:59:59', 2), -- Assignment 3 (Class 3)
 (4, 'Religion Reflection Paper', 'Reflect on a major world religion and its social impact.', '2025-11-05 23:59:59', 2), -- Assignment 4 (Class 4)
 (1, 'Literary Analysis of Gatsby', 'A 1000-word analysis of F. Scott Fitzgerald''s novel.', '2025-11-10 23:59:59', 1), -- Assignment 5 (Class 1, NEW)
 (1, 'Poetry Annotation Draft', 'Annotate five assigned poems for initial feedback.', '2025-11-03 23:59:59', 1), -- Assignment 6 (Class 1, NEW)
@@ -116,7 +115,6 @@ INSERT INTO assignments (class_id, title, description, deadline, rubric_id) VALU
 -- Submissions (Total 13: 2 by Jane, 11 by peers for Jane to review)
 INSERT INTO submissions (assignment_id, student_id, content, submitted_at) VALUES
 -- Submissions by Jane Doe (userID 2)
-(3, 2, 'Jane''s submission for the Historical Sources Review.', NOW() - INTERVAL '10 days'), -- Submission 1
 (1, 2, 'Jane''s draft essay analyzing T.S. Eliot''s "The Waste Land".', NOW() - INTERVAL '9 days'), -- Submission 2
 
 -- Submissions by Peers (John and Sandy) for Jane (userID 2) to review
@@ -128,7 +126,6 @@ INSERT INTO submissions (assignment_id, student_id, content, submitted_at) VALUE
 (5, 5, 'Sandy''s Literary Analysis (2nd submission).', NOW() - INTERVAL '3 days'), -- Submission 8
 (1, 5, 'Sandy''s Essay on Modern Poetry (2nd submission).', NOW() - INTERVAL '2 days'), -- Submission 9
 (6, 1, 'John''s Poetry Annotation Draft (2nd submission).', NOW() - INTERVAL '1 day'), -- Submission 10
-(3, 1, 'John''s Historical Sources Review (2nd submission).', NOW() - INTERVAL '12 hours'), -- Submission 11
 (7, 5, 'Sandy''s Primary Source Synthesis (2nd submission).', NOW() - INTERVAL '6 hours'), -- Submission 12
 (8, 1, 'John''s Historical Methodology Paper (2nd submission).', NOW() - INTERVAL '3 hours'); -- Submission 13
 

@@ -1,0 +1,19 @@
+{
+  "name": "selenium-tests",
+  "version": "1.0.0",
+  "description": "Selenium automated UI tests for Checky",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha *.test.js --timeout 60000",
+    "test:log": "mkdir -p logs && mocha *.test.js --timeout 60000 2>&1 | tee logs/test-$(date +%Y%m%d-%H%M%S).log"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^4.3.7",
+    "chromedriver": "^142.0.3",
+    "mocha": "^10.2.0",
+    "selenium-webdriver": "^4.10.0"
+  }
+}

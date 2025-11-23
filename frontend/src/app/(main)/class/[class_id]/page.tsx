@@ -281,7 +281,7 @@ const scoreData: ChartData<"bar"> = {
           </p>
           <p className="text-sm mt-4 text-gray-300">
             Class code:
-            <span className="bg-orange-200 text-orange-600 rounded p-1">
+            <span id="class-code" className="bg-orange-200 text-orange-600 rounded p-1">
               {course.classCode}
             </span>
           </p>

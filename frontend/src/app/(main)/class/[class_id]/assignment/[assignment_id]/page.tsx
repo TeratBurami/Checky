@@ -301,7 +301,7 @@ export default function AssignmentDetail() {
     <div>
       <div className="py-4 px-12">
         <h1 className="text-xl text-gray-400 font-bold">Course: Academic Writing</h1>
-        <h1 className="text-3xl font-bold my-4">{assignment.title}</h1>
+        <h1 id="assignment-title" className="text-3xl font-bold my-4">{assignment.title}</h1>
       </div>
       <div className="bg-[#D9D9D9] rounded shadow-md shadow-black/20 w-full p-12 text-lg">
         <p>Opened: {new Date(assignment.createdAt).toLocaleString()}</p>
@@ -462,7 +462,7 @@ export default function AssignmentDetail() {
           ) : (
             <div>
               <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold">Your Submission</h3>
+                <h3 id="submission-heading" className="text-xl font-semibold">Your Submission</h3>
                 {assignment.mySubmission?.score !== null ? (
                     <div className="text-center">
                       <p className="text-sm text-gray-500">Graded</p>
@@ -473,7 +473,7 @@ export default function AssignmentDetail() {
                   ) : (
                     <div className="text-center">
                       <p className="text-sm text-gray-500">Status</p>
-                      <span className="text-lg font-semibold text-blue-600">
+                      <span id="submission-status" className="text-lg font-semibold text-blue-600">
                         Pending Grade
                       </span>
                     </div>

@@ -154,6 +154,7 @@ export default function Navbar({ role }: NavbarProps) {
                                 className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-50 border border-gray-100"
                             >
                                 <button
+                                    id="logout-button"
                                     onClick={handleLogout}
                                     className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-orange-100 hover:text-orange-600 transition-colors"
                                 >
