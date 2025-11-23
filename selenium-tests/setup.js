@@ -55,4 +55,4 @@ const login = async (driver, email, password) => {
     }
 };
 
-module.exports = { getDriver, login, By, until };
+module.exports = { getDriver, login, By, until, Key: require('selenium-webdriver').Key };

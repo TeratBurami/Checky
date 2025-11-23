@@ -1,4 +1,4 @@
-const { getDriver, login, By, until } = require('./setup');
+const { getDriver, login, By, until, Key } = require('./setup');
 const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
@@ -24,6 +24,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
 
     it('Test Case 2.1: Teacher Login', async function() {
         await login(driver, teacherEmail, teacherPassword);
+        console.log('[Action] Logged in as teacher');
         
         // Verify dashboard
         const welcomeMessage = await driver.wait(until.elementLocated(By.xpath("//p[contains(text(), 'Welcome Back')]")), 5000).getText();
@@ -32,6 +33,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         // Verify teacher specific items
         const rubricsLink = await driver.findElements(By.css('a[href="/rubric"]'));
         expect(rubricsLink.length).to.be.greaterThan(0);
+        console.log('[Action] Verified teacher dashboard elements');
         console.log('✓ Teacher login successful');
     });
 
@@ -39,6 +41,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         // Navigate to rubric creation page
         await driver.get('http://localhost:3001/rubric/create');
         await driver.wait(until.urlIs('http://localhost:3001/rubric/create'), 5000);
+        console.log('[Action] Navigated to Create Rubric page');
         
         rubricName = 'Essay Evaluation Rubric';
         
@@ -46,6 +49,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         const nameInput = await driver.wait(until.elementLocated(By.css('input[placeholder="e.g. Senior Project Rubric"]')), 5000);
         await nameInput.clear();
         await nameInput.sendKeys(rubricName);
+        console.log(`[Action] Entered rubric name: ${rubricName}`);
         
         // Wait for the default criterion to load
         await driver.sleep(1000);
@@ -56,6 +60,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         if (titleInputs.length > 0) {
             await titleInputs[0].clear();
             await titleInputs[0].sendKeys('Content Quality');
+            console.log('[Action] Entered Criterion 1 title: Content Quality');
         }
         
         // Get description and points inputs for Criterion 1
@@ -97,17 +102,20 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
             await pointsInputs[2].clear();
             await pointsInputs[2].sendKeys('10');
         }
+        console.log('[Action] Filled in levels for Criterion 1');
         
         // Click "Add Criterion" button
         const addCriterionButton = await driver.findElement(By.xpath("//button[contains(text(), 'Add Criterion')]"));
         await addCriterionButton.click();
         await driver.sleep(1500);
+        console.log('[Action] Clicked Add Criterion button');
         
         // Fill in Criterion 2: Grammar and Mechanics
         titleInputs = await driver.findElements(By.css('input[placeholder="e.g., Senior Project Document Proposal"]'));
         if (titleInputs.length > 1) {
             await titleInputs[1].clear();
             await titleInputs[1].sendKeys('Grammar and Mechanics');
+            console.log('[Action] Entered Criterion 2 title: Grammar and Mechanics');
         }
         
         // Get updated description and points inputs (now includes Criterion 2)
@@ -149,10 +157,12 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
             await pointsInputs[5].clear();
             await pointsInputs[5].sendKeys('10');
         }
+        console.log('[Action] Filled in levels for Criterion 2');
         
         // Save Rubric
         const saveButton = await driver.findElement(By.xpath("//button[contains(text(), 'Save Rubric')]"));
         await saveButton.click();
+        console.log('[Action] Clicked Save Rubric button');
         
         // Wait for redirect to rubric list
         await driver.wait(until.urlIs('http://localhost:3001/rubric'), 10000);
@@ -161,6 +171,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         const rubricElement = await driver.wait(until.elementLocated(By.xpath(`//*[contains(text(), '${rubricName}')]`)), 10000);
         expect(await rubricElement.isDisplayed()).to.be.true;
         
+        console.log('[Action] Verified rubric creation in list:', rubricName);
         console.log('✓ Created rubric:', rubricName);
     });
 
@@ -168,11 +179,13 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         // Navigate to classes page
         await driver.get('http://localhost:3001/class');
         await driver.wait(until.urlIs('http://localhost:3001/class'), 5000);
+        console.log('[Action] Navigated to Class List');
         
         // Click on "Historical Investigation Fundamentals" class
         const classCard = await driver.wait(until.elementLocated(By.xpath(`//h3[contains(text(), '${existingClassName}')]`)), 10000);
         await classCard.click();
         await driver.wait(until.urlMatches(/\/class\/\d+/), 5000);
+        console.log('[Action] Navigated to class detail page');
         
         // Extract class ID for later use
         const currentUrl = await driver.getCurrentUrl();
@@ -182,17 +195,20 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         // Navigate to create assignment page
         await driver.get(`http://localhost:3001/class/${classId}/assignment/create`);
         await driver.wait(until.urlContains('/assignment/create'), 5000);
+        console.log('[Action] Navigated to Create Assignment page');
         
         // Fill in assignment details
-        assignmentTitle = 'Historical Sources Analysis';
+        assignmentTitle = `Historical Sources Analysis`;
         
         const titleInput = await driver.wait(until.elementLocated(By.id('title')), 5000);
         await titleInput.clear();
         await titleInput.sendKeys(assignmentTitle);
+        console.log(`[Action] Entered assignment title: ${assignmentTitle}`);
         
         const descInput = await driver.findElement(By.id('description'));
         await descInput.clear();
         await descInput.sendKeys('Analyze three primary sources from the 19th century and evaluate their historical significance.');
+        console.log('[Action] Entered assignment description');
         
         // Set deadline using DatePicker
         const allInputs = await driver.findElements(By.css('input'));
@@ -228,6 +244,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
             await deadlineInput.clear();
             await deadlineInput.sendKeys(dateString);
             await driver.sleep(500);
+            console.log(`[Action] Set deadline to: ${dateString}`);
         }
         
         // Select rubric from dropdown
@@ -237,10 +254,12 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         // Find and select "Essay Evaluation Rubric"
         const rubricOption = await driver.wait(until.elementLocated(By.xpath(`//option[contains(text(), '${rubricName}')]`)), 5000);
         await rubricOption.click();
+        console.log(`[Action] Selected rubric: ${rubricName}`);
         
         // Submit form
         const submitButton = await driver.findElement(By.id('create-assignment-button'));
         await submitButton.click();
+        console.log('[Action] Clicked Create Assignment button');
         
         // Wait longer for redirect and processing
         await driver.sleep(5000);
@@ -260,6 +279,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         try {
             const assignmentElement = await driver.wait(until.elementLocated(By.xpath(`//h1[contains(text(), '${assignmentTitle}')]`)), 10000);
             expect(await assignmentElement.isDisplayed()).to.be.true;
+            console.log('[Action] Verified assignment creation in list:', assignmentTitle);
             console.log('✓ Created assignment:', assignmentTitle);
         } catch (e) {
             // If not found by exact title, check if we're on the class page with assignments
@@ -272,7 +292,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
                 
                 // If we find an assignment that's not the class name, consider it success
                 if (text && text !== existingClassName && text !== 'Assignment' && text.length > 5) {
-                    console.log(`✓ Found assignment: ${text} (assignment creation successful)`);
+                    console.log(`[Action] Found assignment: ${text} (assignment creation successful)`);
                     assignmentTitle = text; // Update to actual title for later tests
                     foundAssignment = text;
                     break;
@@ -291,6 +311,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
             className: existingClassName
         };
         fs.writeFileSync(path.resolve(__dirname, 'assignment_data.json'), JSON.stringify(assignmentData));
+        console.log('[Action] Saved assignment data to assignment_data.json');
     });
 
     it('Test Case 2.4: Edit Assignment Details', async function() {
@@ -310,6 +331,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         await driver.get(`http://localhost:3001/class/${classId}`);
         await driver.wait(until.urlMatches(/\/class\/\d+/), 5000);
         await driver.sleep(1000);
+        console.log('[Action] Navigated to class detail page');
         
         // Find and click on the specific assignment by title to get its ID
         const assignmentToEdit = await driver.wait(until.elementLocated(By.xpath(`//h1[contains(text(), '${assignmentTitleToEdit}')]`)), 10000);
@@ -318,6 +340,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         const parentDiv = await assignmentToEdit.findElement(By.xpath('./ancestor::div[contains(@class, "cursor-pointer")]'));
         await parentDiv.click();
         await driver.wait(until.urlMatches(/\/assignment\/\d+/), 5000);
+        console.log('[Action] Clicked on assignment card');
         
         // Extract assignment ID from URL
         const assignmentUrl = await driver.getCurrentUrl();
@@ -331,14 +354,21 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         // Navigate directly to edit page
         await driver.get(`http://localhost:3001/class/${classId}/assignment/${assignmentId}/edit`);
         await driver.wait(until.urlContains('/edit'), 5000);
+        console.log('[Action] Navigated to Edit Assignment page');
         
         const updatedTitle = `${assignmentTitleToEdit} - Updated`;
         const additionalDescription = ' Please focus on political documents.';
         
         // Update assignment title
         const titleInput = await driver.wait(until.elementLocated(By.id('title')), 5000);
-        await titleInput.clear();
+        
+        // Robust clear using backspaces (most reliable for stubborn React inputs)
+        const currentVal = await titleInput.getAttribute('value');
+        const backspaces = Key.BACK_SPACE.repeat(currentVal.length + 5);
+        await titleInput.sendKeys(backspaces);
+        await driver.sleep(100); // Wait for React to process
         await titleInput.sendKeys(updatedTitle);
+        console.log(`[Action] Updated assignment title to: ${updatedTitle}`);
         
         // Update description
         const descInput = await driver.findElement(By.id('description'));
@@ -346,10 +376,12 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         const newDescription = currentDesc + additionalDescription;
         await descInput.clear();
         await descInput.sendKeys(newDescription);
+        console.log('[Action] Updated assignment description');
         
         // Submit update - use submit button type for reliability
         const updateButton = await driver.findElement(By.css('button[type="submit"]'));
         await updateButton.click();
+        console.log('[Action] Clicked Update Assignment button');
         
         await driver.sleep(3000);
         
@@ -362,6 +394,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         const verifyTitle = await titleInputVerify.getAttribute('value');
         
         expect(verifyTitle).to.equal(updatedTitle);
+        console.log('[Action] Verified assignment title update');
         console.log('✓ Assignment title updated successfully:', updatedTitle);
         
         // Verify description was updated
@@ -385,6 +418,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         // Click on user profile icon
         const profileIcon = await driver.wait(until.elementLocated(By.css('button[aria-label="User Menu"]')), 5000);
         await profileIcon.click();
+        console.log('[Action] Clicked User Menu');
         
         // Wait for dropdown menu to appear
         await driver.sleep(1000);
@@ -392,9 +426,11 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         // Click "Logout" using JavaScript to avoid visibility issues
         const logoutButton = await driver.wait(until.elementLocated(By.id('logout-button')), 5000);
         await driver.executeScript("arguments[0].click();", logoutButton);
+        console.log('[Action] Clicked Logout button');
         
         // Verify redirect to login page
         await driver.wait(until.urlIs('http://localhost:3001/login'), 5000);
+        console.log('[Action] Verified redirect to login page');
         console.log('✓ Logout successful');
     });
 });
