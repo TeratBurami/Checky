@@ -4,7 +4,8 @@
   "description": "Selenium automated UI tests for Checky",
   "main": "index.js",
   "scripts": {
-    "test": "mocha *.test.js --timeout 60000"
+    "test": "mocha *.test.js --timeout 60000",
+    "test:log": "mkdir -p logs && mocha *.test.js --timeout 60000 2>&1 | tee logs/test-$(date +%Y%m%d-%H%M%S).log"
   },
   "keywords": [],
   "author": "",

@@ -38,5 +38,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/selenium-tests/class_data.json
-/selenium-tests/class_code.txt
+# selenium test logs
+selenium-tests/logs/*.log
+selenium-tests/class_data.json
