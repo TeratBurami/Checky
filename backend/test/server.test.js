@@ -1,4 +1,4 @@
-// test/index.test.js
+// test/server.test.js
 import request from "supertest";
 import expressApp from "../server.js";
 
