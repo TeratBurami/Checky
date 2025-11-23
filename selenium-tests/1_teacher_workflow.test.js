@@ -23,7 +23,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         await login(driver, teacherEmail, teacherPassword);
         
         // Verify dashboard
-        const welcomeMessage = await driver.wait(until.elementLocated(By.xpath("//p[contains(text(), 'Welcome Back')]")), 10000).getText();
+        const welcomeMessage = await driver.wait(until.elementLocated(By.xpath("//p[contains(text(), 'Welcome Back')]")), 200).getText();
         expect(welcomeMessage).to.include('Welcome Back');
         
         // Verify teacher specific items
@@ -40,7 +40,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         const rubricName = `Test Rubric ${timestamp}`;
         
         // Enter rubric name
-        const nameInput = await driver.wait(until.elementLocated(By.css('input[placeholder="e.g. Senior Project Rubric"]')), 10000);
+        const nameInput = await driver.wait(until.elementLocated(By.css('input[placeholder="e.g. Senior Project Rubric"]')), 1000);
         await nameInput.clear();
         await nameInput.sendKeys(rubricName);
         
@@ -64,7 +64,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         await descriptionInputs[1].clear();
         await descriptionInputs[1].sendKeys('Adequate content quality');
         await driver.executeScript("arguments[0].scrollIntoView({block: 'center'});", pointsInputs[1]);
-        await driver.sleep(300);
+        
         await pointsInputs[1].click();
         await pointsInputs[1].clear();
         await pointsInputs[1].sendKeys('7');
@@ -73,18 +73,16 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         await descriptionInputs[2].clear();
         await descriptionInputs[2].sendKeys('Excellent content quality');
         await driver.executeScript("arguments[0].scrollIntoView({block: 'center'});", pointsInputs[2]);
-        await driver.sleep(300);
+        
         await pointsInputs[2].click();
         await pointsInputs[2].clear();
         await pointsInputs[2].sendKeys('10');
         
         // Save Rubric
-        await driver.sleep(1000);
         const saveButton = await driver.findElement(By.xpath("//button[contains(text(), 'Save Rubric')]"));
         await saveButton.click();
         
         // Wait for success message or redirect
-        await driver.sleep(3000);
         
         // Store rubric name for later use BEFORE navigation
         driver.rubricName = rubricName;
@@ -122,12 +120,10 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         await descInput.sendKeys('Automated test class for Selenium testing');
         
         // Submit form
-        await driver.sleep(1000);
         const submitButton = await driver.findElement(By.css('button[type="submit"]'));
         await submitButton.click();
         
         // Wait for processing
-        await driver.sleep(3000);
         
         // Navigate to class list manually
         await driver.get('http://localhost:3001/class');
@@ -150,7 +146,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
             code: classCode,
             name: className
         };
-        fs.writeFileSync(path.resolve(__dirname, 'class_code.txt'), classCode);
+        // fs.writeFileSync(path.resolve(__dirname, 'class_code.txt'), classCode);
         fs.writeFileSync(path.resolve(__dirname, 'class_data.json'), JSON.stringify(classData));
         
         // Store class code for later use
@@ -198,7 +194,6 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         // First, click the select to open it
         const rubricSelect = await driver.findElement(By.id('rubric'));
         await rubricSelect.click();
-        await driver.sleep(500);
         
         // Try to find the rubric option, with retries
         let rubricOption = null;
@@ -210,7 +205,6 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
                 console.log(`Attempt ${attempt + 1}: Rubric not found, refreshing page...`);
                 if (attempt < 2) {
                     await driver.navigate().refresh();
-                    await driver.sleep(2000);
                     
                     // Re-fill the form
                     const titleInput2 = await driver.findElement(By.id('title'));
@@ -223,7 +217,6 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
                     
                     const rubricSelect2 = await driver.findElement(By.id('rubric'));
                     await rubricSelect2.click();
-                    await driver.sleep(500);
                 }
             }
         }
@@ -245,12 +238,10 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         }
         
         // Submit form
-        await driver.sleep(1000);
         const submitButton = await driver.findElement(By.id('create-assignment-button'));
         await submitButton.click();
         
         // Wait for processing
-        await driver.sleep(2000);
         
         // Check current URL and navigate if needed
         let assignmentUrl = await driver.getCurrentUrl();

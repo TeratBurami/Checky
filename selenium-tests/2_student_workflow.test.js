@@ -39,27 +39,24 @@ describe('System Test Suite 1: Student Assignment Submission Workflow', function
         let joinedClassCode = null;
         let joinedClassName = null;
         try {
-            const classCodePath = path.resolve(__dirname, 'class_code.txt');
             const classDataPath = path.resolve(__dirname, 'class_data.json');
             
-            if (fs.existsSync(classCodePath)) {
-                const classCode = fs.readFileSync(classCodePath, 'utf8').trim();
+            if (fs.existsSync(classDataPath)) {
+                const classDataString = fs.readFileSync(classDataPath, 'utf8');
+                const classDataObject = JSON.parse(classDataString);
+                const classCode = classDataObject.code;
                 joinedClassCode = classCode; // Store for later use
                 console.log('Joining class with code:', classCode);
-                
-                // Try to read class name from JSON file
-                if (fs.existsSync(classDataPath)) {
-                    const classData = JSON.parse(fs.readFileSync(classDataPath, 'utf8'));
-                    joinedClassName = classData.name;
-                    console.log('Class name from file:', joinedClassName);
-                }
+
+                const className = classDataObject.name;
+                joinedClassName = className; // Store for later use
+                console.log('Joining class with name:', className);
                 
                 const joinInput = await driver.findElement(By.css('input[placeholder="Join course by code"]'));
                 await joinInput.sendKeys(classCode);
                 const joinButton = await driver.findElement(By.xpath("//button[contains(text(), 'Join')]"));
                 await joinButton.click();
                 // Wait for reload or success
-                await driver.sleep(2000);
             } else {
                 console.log('Class code file not found, skipping join.');
             }
@@ -73,7 +70,6 @@ describe('System Test Suite 1: Student Assignment Submission Workflow', function
         if (joinedClassName) {
             try {
                 // Look for a class card with the exact class name
-                await driver.sleep(1000); // Wait for class list to update
                 classCard = await driver.wait(until.elementLocated(By.xpath(`//h3[contains(text(), '${joinedClassName}')]`)), 10000);
                 console.log('Found class by name:', joinedClassName);
             } catch (e) {
@@ -98,7 +94,6 @@ describe('System Test Suite 1: Student Assignment Submission Workflow', function
         } else if (joinedClassCode) {
             // No class name, try to find by class code
             try {
-                await driver.sleep(1000);
                 const allClassCards = await driver.findElements(By.css('.grid > div'));
                 let foundCard = null;
                 for (let card of allClassCards) {

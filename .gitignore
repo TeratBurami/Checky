@@ -37,3 +37,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/selenium-tests/class_data.json
+/selenium-tests/class_code.txt

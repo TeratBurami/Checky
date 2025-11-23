@@ -38,12 +38,12 @@ const login = async (driver, email, password) => {
     await driver.findElement(By.css('button[type="submit"]')).click();
     
     // Wait for navigation
-    await driver.wait(until.urlIs('http://localhost:3001/'), 10000);
+    await driver.wait(until.urlIs('http://localhost:3001/'), 1000);
     
     // Long wait for manual dismissal of password breach warnings
     // If you see a password breach warning, click OK during this time
     console.log('Waiting 3 seconds for any password warnings to be dismissed...');
-    await driver.sleep(3000);
+    await driver.sleep(1000);
     
     // Try to handle any JavaScript alerts (though password warnings are browser-level)
     try {
