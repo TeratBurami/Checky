@@ -47,11 +47,20 @@ jobs:
           node-version: 20
 
       # -------------------------
-      # Start Postgres via Docker Compose
+      # Start Postgres via Docker Compose with inline env
       # -------------------------
       - name: Start Postgres
         run: |
-          DB_USER=postgres DB_PASS=Ch3ckYP@5sW0rd DB_NAME=checkydb DB_PORT=5432 docker compose up -d --build
+          cat <<EOF > docker-compose.override.yml
+          version: "3.9"
+          services:
+            postgres:
+              environment:
+                POSTGRES_USER: postgres
+                POSTGRES_PASSWORD: Ch3ckYP@5sW0rd
+                POSTGRES_DB: checkydb
+          EOF
+          docker compose up -d --build
 
       # -------------------------
       # Backend
