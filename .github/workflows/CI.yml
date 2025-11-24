@@ -44,7 +44,7 @@ jobs:
         # Start Postgres via Docker Compose
         # -------------------------
         - name: Start Postgres
-          run: docker-compose up -d --build
+          run: docker compose up -d --build
   
         # -------------------------
         # Backend
