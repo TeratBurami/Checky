@@ -61,6 +61,25 @@ jobs:
           sudo apt update
           sudo apt install -y docker-compose
 
+      # Optional: create .env for Compose if your docker-compose.yml uses ${DB_*} variables
+      - name: Create Docker Compose .env
+        run: |
+          echo "DB_USER=postgres" >> .env
+          echo "DB_PASS=postgres" >> .env
+          echo "DB_NAME=checkydb" >> .env
+          echo "DB_PORT=5432" >> .env
+
+      - name: Start DB with Docker Compose
+        run: docker-compose up -d db
+
+      # Wait until DB is ready
+      - name: Wait for Postgres
+        run: |
+          until docker exec $(docker ps -qf "name=db") pg_isready -U postgres; do
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+
       - name: Create backend .env (for Docker DB)
         working-directory: backend
         run: |
@@ -72,9 +91,6 @@ jobs:
           echo "PORT=3001" >> .env
           echo "JWT_SECRET=temporarysecret" >> .env
 
-      - name: Start DB with Docker Compose
-        run: docker-compose up -d db
-
       - name: Install backend dependencies
         working-directory: backend
         run: npm install
@@ -83,7 +99,7 @@ jobs:
         working-directory: backend
         run: |
           nohup npm run start > backend.log 2>&1 &
-          sleep 15   # wait for backend to be ready
+          sleep 15
 
       - name: Install frontend dependencies
         working-directory: frontend
@@ -115,4 +131,3 @@ jobs:
       - name: Tear down Docker Compose
         if: always()
         run: docker-compose down
-
