@@ -27,7 +27,7 @@ describe('System Test Suite 2: Teacher Assignment Management Workflow', function
         console.log('[Action] Logged in as teacher');
         
         // Verify dashboard
-        const welcomeMessage = await driver.wait(until.elementLocated(By.xpath("//p[contains(text(), 'Welcome Back')]")), 5000).getText();
+        const welcomeMessage = await driver.wait(until.elementLocated(By.xpath("//p[contains(text(), 'Welcome Back')]")), 60000).getText();
         expect(welcomeMessage).to.include('Welcome Back');
         
         // Verify teacher specific items

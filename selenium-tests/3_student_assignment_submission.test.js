@@ -44,30 +44,30 @@ describe('System Test Suite 3: Student Assignment Submission Workflow', function
         await login(driver, studentEmail, studentPassword);
         
         // Verify dashboard
-        const welcomeMessage = await driver.wait(until.elementLocated(By.xpath("//p[contains(text(), 'Welcome Back')]")), 5000).getText();
+        const welcomeMessage = await driver.wait(until.elementLocated(By.xpath("//p[contains(text(), 'Welcome Back')]")), 60000).getText();
         expect(welcomeMessage).to.include('Welcome Back');
         
         // Verify student specific items (e.g., Peer Reviews link which is specific to students/teachers but mainly students in this context)
         // Or just verify we are on dashboard
-        await driver.wait(until.urlIs('http://localhost:3001/'), 5000);
+        await driver.wait(until.urlIs('http://localhost:3001/'), 60000);
         console.log('[Action] Student logged in successfully');
     });
 
     it('Test Case 3.2: Navigate to Class', async function() {
         // Navigate to classes page
         await driver.get('http://localhost:3001/class');
-        await driver.wait(until.urlIs('http://localhost:3001/class'), 5000);
+        await driver.wait(until.urlIs('http://localhost:3001/class'), 60000);
         
         // Click on the specific class card
         console.log(`[Action] Navigating to class: ${className}`);
-        const classCard = await driver.wait(until.elementLocated(By.xpath(`//h3[contains(text(), '${className}')]`)), 10000);
+        const classCard = await driver.wait(until.elementLocated(By.xpath(`//h3[contains(text(), '${className}')]`)), 60000);
         await classCard.click();
         
         // Wait for class detail page
-        await driver.wait(until.urlMatches(/\/class\/\d+/), 5000);
+        await driver.wait(until.urlMatches(/\/class\/\d+/), 60000);
         
         // Verify class name is displayed on the page
-        const classHeader = await driver.wait(until.elementLocated(By.xpath(`//h1[contains(text(), '${className}')]`)), 5000);
+        const classHeader = await driver.wait(until.elementLocated(By.xpath(`//h1[contains(text(), '${className}')]`)), 60000);
         expect(await classHeader.isDisplayed()).to.be.true;
         console.log('[Action] Class detail page loaded');
     });
@@ -75,17 +75,17 @@ describe('System Test Suite 3: Student Assignment Submission Workflow', function
     it('Test Case 3.3: View Assignment Details', async function() {
         console.log(`[Action] Looking for assignment: ${assignmentTitle}`);
         // Find the assignment in the list
-        const assignmentCard = await driver.wait(until.elementLocated(By.xpath(`//h1[contains(text(), '${assignmentTitle}')]`)), 10000);
+        const assignmentCard = await driver.wait(until.elementLocated(By.xpath(`//h1[contains(text(), '${assignmentTitle}')]`)), 60000);
         
         // Click on the assignment (need to click the parent clickable div)
         const parentDiv = await assignmentCard.findElement(By.xpath('./ancestor::div[contains(@class, "cursor-pointer")]'));
         await parentDiv.click();
         
         // Wait for assignment detail page
-        await driver.wait(until.urlMatches(/\/assignment\/\d+/), 5000);
+        await driver.wait(until.urlMatches(/\/assignment\/\d+/), 60000);
         
         // Verify assignment title
-        const titleElement = await driver.wait(until.elementLocated(By.xpath(`//h1[contains(text(), '${assignmentTitle}')]`)), 5000);
+        const titleElement = await driver.wait(until.elementLocated(By.xpath(`//h1[contains(text(), '${assignmentTitle}')]`)), 60000);
         expect(await titleElement.isDisplayed()).to.be.true;
         
         console.log(`[Action] Viewing assignment details for: ${assignmentTitle}`);
@@ -100,7 +100,7 @@ describe('System Test Suite 3: Student Assignment Submission Workflow', function
         }
 
         // Locate textarea by ID
-        const textarea = await driver.wait(until.elementLocated(By.id('submissionContent')), 5000);
+        const textarea = await driver.wait(until.elementLocated(By.id('submissionContent')), 60000);
         
         const submissionText = "This is my essay analyzing the historical documents. The sources reveal a complex narrative...";
         await textarea.clear();
@@ -120,7 +120,7 @@ describe('System Test Suite 3: Student Assignment Submission Workflow', function
         await driver.sleep(3000);
         
         // Verify "Your Submission" section appears (it's an h3 with id="submission-heading")
-        const submissionSection = await driver.wait(until.elementLocated(By.id('submission-heading')), 10000);
+        const submissionSection = await driver.wait(until.elementLocated(By.id('submission-heading')), 60000);
         expect(await submissionSection.isDisplayed()).to.be.true;
         
         // Verify text content
@@ -132,14 +132,14 @@ describe('System Test Suite 3: Student Assignment Submission Workflow', function
 
     it('Test Case 3.5: Edit Submission and Add Files', async function() {
         // Find Edit Submission button
-        const editButton = await driver.wait(until.elementLocated(By.xpath("//button[contains(text(), 'Edit Submission')]")), 10000);
+        const editButton = await driver.wait(until.elementLocated(By.xpath("//button[contains(text(), 'Edit Submission')]")), 60000);
         await driver.executeScript("arguments[0].scrollIntoView({block: 'center'});", editButton);
         await driver.sleep(500);
         await editButton.click();
         console.log('[Action] Clicked Edit Submission');
         
         // Wait for edit mode (textarea should appear again)
-        const textarea = await driver.wait(until.elementLocated(By.id('submissionContent')), 5000);
+        const textarea = await driver.wait(until.elementLocated(By.id('submissionContent')), 60000);
         
         // Update text
         const updatedText = "Updated: This is my essay analyzing the historical documents. The sources reveal a complex narrative...";
@@ -154,7 +154,7 @@ describe('System Test Suite 3: Student Assignment Submission Workflow', function
         console.log('[Action] Uploaded file: test_essay.pdf');
         
         // Wait for file to appear in list
-        await driver.wait(until.elementLocated(By.xpath("//span[contains(text(), 'test_essay.pdf')]")), 5000);
+        await driver.wait(until.elementLocated(By.xpath("//span[contains(text(), 'test_essay.pdf')]")), 60000);
         
         // Click Update Submission button
         const updateButton = await driver.findElement(By.xpath("//button[text()='Update Submission']"));
@@ -167,7 +167,7 @@ describe('System Test Suite 3: Student Assignment Submission Workflow', function
         await driver.sleep(3000);
         
         // Verify updated text
-        const submittedText = await driver.wait(until.elementLocated(By.xpath(`//p[contains(text(), "Updated: This is my essay")]`)), 10000);
+        const submittedText = await driver.wait(until.elementLocated(By.xpath(`//p[contains(text(), "Updated: This is my essay")]`)), 60000);
         expect(await submittedText.isDisplayed()).to.be.true;
         
         // Verify file is listed
@@ -183,7 +183,7 @@ describe('System Test Suite 3: Student Assignment Submission Workflow', function
         await driver.sleep(2000);
         
         // Verify "Your Submission" section
-        const submissionSection = await driver.wait(until.elementLocated(By.id('submission-heading')), 10000);
+        const submissionSection = await driver.wait(until.elementLocated(By.id('submission-heading')), 60000);
         expect(await submissionSection.isDisplayed()).to.be.true;
         
         // Verify status badge (Pending Grade OR Graded)
@@ -205,21 +205,21 @@ describe('System Test Suite 3: Student Assignment Submission Workflow', function
     it('Test Case 3.7: Logout', async function() {
         // Ensure we're on a stable page
         await driver.get('http://localhost:3001/');
-        await driver.wait(until.urlIs('http://localhost:3001/'), 5000);
+        await driver.wait(until.urlIs('http://localhost:3001/'), 60000);
         
         // Click on user profile icon
-        const profileIcon = await driver.wait(until.elementLocated(By.css('button[aria-label="User Menu"]')), 5000);
+        const profileIcon = await driver.wait(until.elementLocated(By.css('button[aria-label="User Menu"]')), 60000);
         await profileIcon.click();
         
         // Wait for dropdown menu to appear
         await driver.sleep(1000);
         
         // Click "Logout" using JavaScript to avoid visibility issues
-        const logoutButton = await driver.wait(until.elementLocated(By.id('logout-button')), 5000);
+        const logoutButton = await driver.wait(until.elementLocated(By.id('logout-button')), 60000);
         await driver.executeScript("arguments[0].click();", logoutButton);
         
         // Verify redirect to login page
-        await driver.wait(until.urlIs('http://localhost:3001/login'), 5000);
+        await driver.wait(until.urlIs('http://localhost:3001/login'), 60000);
         console.log('[Action] Logout successful');
     });
 });

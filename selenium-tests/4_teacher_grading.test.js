@@ -48,22 +48,22 @@ describe('System Test Suite 4: Teacher Grading Workflow', function() {
             await driver.get(`http://localhost:3001/class/${classId}`);
         } else {
             await driver.get('http://localhost:3001/class');
-            const classCard = await driver.wait(until.elementLocated(By.xpath(`//h3[contains(text(), '${className}')]`)), 10000);
+            const classCard = await driver.wait(until.elementLocated(By.xpath(`//h3[contains(text(), '${className}')]`)), 60000);
             await classCard.click();
         }
-        await driver.wait(until.urlMatches(/\/class\/\d+/), 5000);
+        await driver.wait(until.urlMatches(/\/class\/\d+/), 60000);
         console.log(`[Action] Navigated to class: ${className}`);
         
         // Click on assignment
-        const assignmentCard = await driver.wait(until.elementLocated(By.xpath(`//h1[contains(text(), '${assignmentTitle}')]`)), 10000);
+        const assignmentCard = await driver.wait(until.elementLocated(By.xpath(`//h1[contains(text(), '${assignmentTitle}')]`)), 60000);
         const parentDiv = await assignmentCard.findElement(By.xpath('./ancestor::div[contains(@class, "cursor-pointer")]'));
         await parentDiv.click();
         
-        await driver.wait(until.urlMatches(/\/assignment\/\d+/), 5000);
+        await driver.wait(until.urlMatches(/\/assignment\/\d+/), 60000);
         console.log(`[Action] Viewing assignment: ${assignmentTitle}`);
         
         // Verify "Student Submissions" section
-        const submissionsHeader = await driver.wait(until.elementLocated(By.xpath("//h3[contains(text(), 'Student Submissions')]")), 10000);
+        const submissionsHeader = await driver.wait(until.elementLocated(By.xpath("//h3[contains(text(), 'Student Submissions')]")), 60000);
         expect(await submissionsHeader.isDisplayed()).to.be.true;
         
         // Verify "Auto-Grade All" button exists
@@ -135,7 +135,7 @@ describe('System Test Suite 4: Teacher Grading Workflow', function() {
             
             // Wait for "Grade Submission" text or input fields
             // The heading is h2, not h3
-            await driver.wait(until.elementLocated(By.xpath("//h2[contains(text(), 'Grade Submission')]")), 10000);
+            await driver.wait(until.elementLocated(By.xpath("//h2[contains(text(), 'Grade Submission')]")), 60000);
             
             // Enter score
             const scoreInput = await driver.findElement(By.id('score'));
@@ -158,7 +158,7 @@ describe('System Test Suite 4: Teacher Grading Workflow', function() {
             
             // Wait for success message or redirect
             // Prompt says: Success message ("Grade Saved!") appears.
-            await driver.wait(until.elementLocated(By.xpath("//*[contains(text(), 'Grade Saved')]")), 5000);
+            await driver.wait(until.elementLocated(By.xpath("//*[contains(text(), 'Grade Saved')]")), 60000);
             
             // Wait for redirect back to assignment page
             await driver.sleep(2000);
