@@ -5,6 +5,9 @@ on:
     branches: [ main ]
 
 jobs:
+  # -------------------------
+  # Unit Tests
+  # -------------------------
   unit-tests:
     name: Backend Unit Tests
     runs-on: ubuntu-latest
@@ -29,6 +32,9 @@ jobs:
           name: backend-coverage
           path: backend/coverage/
 
+  # -------------------------
+  # Selenium UI Tests
+  # -------------------------
   ui-tests:
     name: Selenium UI Tests
     runs-on: ubuntu-latest
@@ -59,13 +65,13 @@ jobs:
       - name: Start backend
         working-directory: backend
         run: |
-          DB_HOST=postgres \
-          DB_USER=postgres \
-          DB_PASS=Ch3ckYP@5sW0rd \
-          DB_NAME=checkydb \
-          DB_PORT=5432 \
-          PORT=3000 \
-          JWT_SECRET=9b7d6c2a1f4e8b3c0a6d5f2e7c4b9a8d3e1f0c5a9b2e7d6f4c3a1e8b7d9f6c2 \
+          export DB_HOST=127.0.0.1
+          export DB_USER=postgres
+          export DB_PASS=Ch3ckYP@5sW0rd
+          export DB_NAME=checkydb
+          export DB_PORT=5432
+          export PORT=3000
+          export JWT_SECRET=9b7d6c2a1f4e8b3c0a6d5f2e7c4b9a8d3e1f0c5a9b2e7d6f4c3a1e8b7d9f6c2
           npm start &
           sleep 20
 
@@ -79,8 +85,10 @@ jobs:
       - name: Start frontend
         working-directory: frontend
         run: |
-          NEXT_PUBLIC_API_URL=http://localhost:3000 \
-          HOST=0.0.0.0 PORT=3001 npm run dev &
+          export NEXT_PUBLIC_API_URL=http://localhost:3000
+          export HOST=0.0.0.0
+          export PORT=3001
+          npm run dev &
           sleep 20
 
       # -------------------------
