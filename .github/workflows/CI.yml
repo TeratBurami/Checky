@@ -8,6 +8,21 @@ jobs:
   unit-tests:
     name: Backend Unit Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: checkydb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,7 +35,7 @@ jobs:
       - name: Create backend .env
         working-directory: backend
         run: |
-          echo "DB_HOST=localhost" > .env
+          echo "DB_HOST=127.0.0.1" > .env
           echo "DB_USER=postgres" >> .env
           echo "DB_PASS=postgres" >> .env
           echo "DB_NAME=checkydb" >> .env
@@ -31,6 +46,15 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: npm install
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..10}; do
+            pg_isready -h 127.0.0.1 -p 5432 && exit 0
+            echo "Waiting for PostgreSQL..."
+            sleep 5
+          done
+          exit 1
 
       - name: Run backend tests
         working-directory: backend
@@ -46,6 +70,21 @@ jobs:
     name: Selenium UI Tests
     runs-on: ubuntu-latest
     needs: unit-tests
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: checkydb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -55,38 +94,18 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Docker Compose
-        run: |
-          sudo apt update
-          sudo apt install -y docker-compose
-
-      - name: Create Docker Compose .env
-        run: |
-          echo "DB_USER=postgres" > .env
-          echo "DB_PASS=postgres" >> .env
-          echo "DB_NAME=checkydb" >> .env
-          echo "DB_PORT=5432" >> .env
-
-      - name: Start DB with Docker Compose
-        run: |
-          docker-compose up -d db
-          echo "Waiting 30 seconds for Postgres to initialize..."
-          sleep 30
-
-      - name: Create backend .env (for Docker DB)
-        working-directory: backend
-        run: |
-          echo "DB_HOST=127.0.0.1" > .env
-          echo "DB_USER=postgres" >> .env
-          echo "DB_PASS=postgres" >> .env
-          echo "DB_NAME=checkydb" >> .env
-          echo "DB_PORT=5432" >> .env
-          echo "PORT=3000" >> .env
-          echo "JWT_SECRET=temporarysecret" >> .env
-
       - name: Install backend dependencies
         working-directory: backend
         run: npm install
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..10}; do
+            pg_isready -h 127.0.0.1 -p 5432 && exit 0
+            echo "Waiting for PostgreSQL..."
+            sleep 5
+          done
+          exit 1
 
       - name: Start backend
         working-directory: backend
@@ -126,4 +145,3 @@ jobs:
       - name: Tear down Docker Compose
         if: always()
         run: docker-compose down
-
