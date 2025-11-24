@@ -5,6 +5,9 @@ on:
     branches: [ main ]
 
 jobs:
+  # -------------------------
+  # Backend Unit Tests
+  # -------------------------
   unit-tests:
     name: Backend Unit Tests
     runs-on: ubuntu-latest
@@ -29,72 +32,89 @@ jobs:
           name: backend-coverage
           path: backend/coverage/
 
+  # -------------------------
+  # Selenium UI Tests
+  # -------------------------
   ui-tests:
-      name: Selenium UI Tests
-      runs-on: ubuntu-latest
-  
-      steps:
-        - uses: actions/checkout@v4
-  
-        - uses: actions/setup-node@v4
-          with:
-            node-version: 20
-  
-        # -------------------------
-        # Start Postgres via Docker Compose
-        # -------------------------
-        - name: Start Postgres
-          run: docker compose up -d --build
-  
-        # -------------------------
-        # Backend
-        # -------------------------
-        - name: Create backend .env
-          working-directory: backend
-          run: |
-            echo "DB_HOST=127.0.0.1" > .env
-            echo "DB_USER=postgres" >> .env
-            echo "DB_PASS=Ch3ckYP@5sW0rd" >> .env
-            echo "DB_NAME=checkydb" >> .env
-            echo "DB_PORT=5432" >> .env
-            echo "PORT=3000" >> .env
-            echo "JWT_SECRET=temporarysecret" >> .env
-  
-        - name: Install backend dependencies
-          working-directory: backend
-          run: npm install
-  
-        - name: Start backend
-          working-directory: backend
-          run: |
-            npm start &
-            sleep 20
-  
-        # -------------------------
-        # Frontend
-        # -------------------------
-        - name: Create frontend .env
-          working-directory: frontend
-          run: echo "NEXT_PUBLIC_API_URL=http://localhost:3000" > .env
-  
-        - name: Install frontend dependencies
-          working-directory: frontend
-          run: npm install
-  
-        - name: Start frontend
-          working-directory: frontend
-          run: |
-            HOST=0.0.0.0 PORT=3001 npm run dev &
-            sleep 20
-  
-        # -------------------------
-        # Selenium
-        # -------------------------
-        - name: Install Selenium dependencies
-          working-directory: selenium-tests
-          run: npm install
-  
-        - name: Install Chrome & Chromedriver
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y wget unzip libxi6 libns
+    name: Selenium UI Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # -------------------------
+      # Start Postgres via Docker Compose
+      # -------------------------
+      - name: Start Postgres
+        run: docker compose up -d --build
+
+      # -------------------------
+      # Backend
+      # -------------------------
+      - name: Create backend .env
+        working-directory: backend
+        run: |
+          echo "DB_HOST=postgres" > .env
+          echo "DB_USER=postgres" >> .env
+          echo "DB_PASS=Ch3ckYP@5sW0rd" >> .env
+          echo "DB_NAME=checkydb" >> .env
+          echo "DB_PORT=5432" >> .env
+          echo "PORT=3000" >> .env
+          echo "JWT_SECRET=temporarysecret" >> .env
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+
+      - name: Start backend
+        working-directory: backend
+        run: |
+          npm start &
+          sleep 20
+
+      # -------------------------
+      # Frontend
+      # -------------------------
+      - name: Create frontend .env
+        working-directory: frontend
+        run: echo "NEXT_PUBLIC_API_URL=http://localhost:3000" > .env
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Start frontend
+        working-directory: frontend
+        run: |
+          PORT=3001 npm run dev &
+          sleep 20
+
+      # -------------------------
+      # Selenium
+      # -------------------------
+      - name: Install Selenium dependencies
+        working-directory: selenium-tests
+        run: npm install
+
+      - name: Install Chrome & Chromedriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip libxi6 libnss3 libxss1 xvfb fonts-liberation
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt --fix-broken install -y
+          npm install chromedriver --save-dev
+
+      - name: Run Selenium UI tests
+        working-directory: selenium-tests
+        run: npm test
+
+      # -------------------------
+      # Shutdown Postgres
+      # -------------------------
+      - name: Stop Postgres
+        if: always()
+        run: docker compose down
