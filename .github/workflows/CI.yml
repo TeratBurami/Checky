@@ -72,14 +72,6 @@ jobs:
       - name: Start DB with Docker Compose
         run: docker-compose up -d db
 
-      # Wait until DB is ready
-      - name: Wait for Postgres
-        run: |
-          until docker exec $(docker ps -qf "name=db") pg_isready -U postgres; do
-            echo "Waiting for Postgres..."
-            sleep 2
-          done
-
       - name: Create backend .env (for Docker DB)
         working-directory: backend
         run: |
