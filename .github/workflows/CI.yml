@@ -47,6 +47,20 @@ jobs:
     name: Selenium UI Tests
     runs-on: ubuntu-latest
     needs: unit-tests
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: checkydb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout code
@@ -89,14 +103,23 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: npm install
-      
+
+      - name: Create backend .env (Postgres service)
+        working-directory: backend
+        run: |
+          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_USER=postgres" >> .env
+          echo "DB_PASS=postgres" >> .env
+          echo "DB_NAME=checkydb" >> .env
+          echo "DB_PORT=5432" >> .env
+          echo "PORT=3001" >> .env
+          echo "JWT_SECRET=temporarysecret" >> .env
+
       - name: Start backend
         working-directory: backend
         run: |
           npm run start &
-          echo "Waiting for backend to start..."
-          npx wait-on http://localhost:3001
-
+          npx wait-on http://localhost:3001 --timeout 60000
 
       - name: Run Selenium UI tests
         working-directory: selenium-tests
