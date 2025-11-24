@@ -103,7 +103,6 @@ jobs:
         working-directory: frontend
         run: |
           nohup npm run dev > frontend.log 2>&1 &
-          npx wait-on http://localhost:3000 --timeout 60000
 
       - name: Install Selenium dependencies
         working-directory: selenium-tests
