@@ -4,9 +4,8 @@ require('chromedriver');
 
 const getDriver = async () => {
     const options = new chrome.Options();
-    
+
     options.addArguments(
-        '--headless=new',
         '--window-size=1920,1080',
         '--no-sandbox',
         '--disable-dev-shm-usage',
