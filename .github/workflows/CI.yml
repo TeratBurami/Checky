@@ -86,12 +86,17 @@ jobs:
           npm run dev &
           npx wait-on http://localhost:3000 --timeout 60000
 
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+      
       - name: Start backend
         working-directory: backend
         run: |
           npm run start &
           echo "Waiting for backend to start..."
           npx wait-on http://localhost:3001
+
 
       - name: Run Selenium UI tests
         working-directory: selenium-tests
