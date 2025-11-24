@@ -56,6 +56,27 @@ jobs:
           sleep 60
 
       # -------------------------
+      # Debugging Docker Info
+      # -------------------------
+      - name: Debug Docker
+        run: |
+          echo "=== Docker version ==="
+          docker version
+          echo
+          echo "=== Docker info ==="
+          docker info
+          echo
+          echo "=== Running containers ==="
+          docker ps -a
+          echo
+          echo "=== Docker network inspect ==="
+          docker network ls
+          docker network inspect checky_default || echo "checky_default network not found"
+          echo
+          echo "=== Ports mapped ==="
+          docker port CheckyDB || echo "CheckyDB container not found"
+
+      # -------------------------
       # Backend
       # -------------------------
       - name: Install backend dependencies
