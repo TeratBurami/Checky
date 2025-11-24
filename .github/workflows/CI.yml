@@ -121,7 +121,7 @@ jobs:
       - name: Start frontend
         working-directory: frontend
         run: |
-          npm run dev -- --port 3001 &
+          npm run dev -- --host 0.0.0.0 --port 3001 &
           echo "Waiting 60 seconds for frontend to start..."
           sleep 60
 
