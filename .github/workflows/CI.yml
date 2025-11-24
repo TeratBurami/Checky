@@ -20,7 +20,7 @@ jobs:
       - name: Create backend .env
         working-directory: backend
         run: |
-          echo "DB_HOST=localhost" >> .env
+          echo "DB_HOST=localhost" > .env
           echo "DB_USER=postgres" >> .env
           echo "DB_PASS=postgres" >> .env
           echo "DB_NAME=checkydb" >> .env
@@ -61,16 +61,23 @@ jobs:
           sudo apt update
           sudo apt install -y docker-compose
 
-      # Optional: create .env for Compose if your docker-compose.yml uses ${DB_*} variables
       - name: Create Docker Compose .env
         run: |
-          echo "DB_USER=postgres" >> .env
+          echo "DB_USER=postgres" > .env
           echo "DB_PASS=postgres" >> .env
           echo "DB_NAME=checkydb" >> .env
           echo "DB_PORT=5432" >> .env
 
       - name: Start DB with Docker Compose
-        run: docker-compose up -d db
+        run: |
+          docker-compose up -d db
+          # Wait for DB to be healthy
+          for i in {1..30}; do
+            status=$(docker inspect --format='{{.State.Health.Status}}' $(docker-compose ps -q db))
+            echo "Postgres status: $status"
+            [ "$status" = "healthy" ] && break
+            sleep 2
+          done
 
       - name: Create backend .env (for Docker DB)
         working-directory: backend
@@ -91,7 +98,7 @@ jobs:
         working-directory: backend
         run: |
           nohup npm run start > backend.log 2>&1 &
-          sleep 15
+          sleep 20  # ensure backend is ready
 
       - name: Install frontend dependencies
         working-directory: frontend
