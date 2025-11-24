@@ -61,11 +61,6 @@ jobs:
           sudo apt update
           sudo apt install -y docker-compose
 
-      - name: Start DB with Docker Compose
-        run: |
-          DB_USER=postgres DB_PASS=postgres DB_NAME=checkydb DB_PORT=5432 docker-compose up -d db
-
-
       - name: Create backend .env (for Docker DB)
         working-directory: backend
         run: |
@@ -76,6 +71,9 @@ jobs:
           echo "DB_PORT=5432" >> .env
           echo "PORT=3001" >> .env
           echo "JWT_SECRET=temporarysecret" >> .env
+
+      - name: Start DB with Docker Compose
+        run: docker-compose up -d db
 
       - name: Install backend dependencies
         working-directory: backend
