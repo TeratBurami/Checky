@@ -125,5 +125,5 @@ jobs:
       - name: Run Selenium UI tests
         working-directory: selenium-tests
         run: |
-          echo "Running UI tests (headless Chrome)..."
+          echo "Running UI tests (Chrome with GUI)..."
           npm test
