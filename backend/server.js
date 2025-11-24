@@ -13,6 +13,8 @@ const corsOptions = {
   credentials: true,
 };
 
+//some changes
+
 app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
