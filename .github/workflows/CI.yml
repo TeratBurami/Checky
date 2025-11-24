@@ -61,14 +61,10 @@ jobs:
           sudo apt update
           sudo apt install -y docker-compose
 
-      - name: Start database via Docker Compose
+      - name: Start DB with Docker Compose
         run: |
-          docker-compose up -d db       # just bring up the DB service
-          # wait until Postgres is ready
-          until docker exec $(docker ps -qf "name=db") pg_isready -U postgres; do
-            echo "Waiting for Postgres..."
-            sleep 2
-          done
+          DB_USER=postgres DB_PASS=postgres DB_NAME=checkydb DB_PORT=5432 docker-compose up -d db
+
 
       - name: Create backend .env (for Docker DB)
         working-directory: backend
