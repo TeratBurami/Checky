@@ -81,7 +81,7 @@ jobs:
           echo "DB_PASS=postgres" >> .env
           echo "DB_NAME=checkydb" >> .env
           echo "DB_PORT=5432" >> .env
-          echo "PORT=3001" >> .env
+          echo "PORT=3000" >> .env
           echo "JWT_SECRET=temporarysecret" >> .env
 
       - name: Install backend dependencies
