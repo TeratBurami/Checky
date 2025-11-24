@@ -57,10 +57,10 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install Chrome
+      - name: Install Chrome dependencies
         run: |
           sudo apt update
-          sudo apt install -y wget unzip libxi6
+          sudo apt install -y wget unzip libxi6 libgconf-2-4 fonts-liberation libnss3 libxss1 xvfb
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt --fix-broken install -y
 
@@ -78,10 +78,13 @@ jobs:
 
       - name: Start frontend
         working-directory: frontend
-        run: npm run start &
+        run: |
+          npm run start &
+          echo "Waiting for frontend to start..."
+          npx wait-on http://localhost:3000
 
       - name: Run Selenium UI tests
         working-directory: selenium-tests
         run: |
-          echo "Running UI tests (≈3 minutes)..."
+          echo "Running UI tests (headless Chrome)..."
           npm test
