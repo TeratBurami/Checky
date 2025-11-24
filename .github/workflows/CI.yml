@@ -46,18 +46,8 @@ jobs:
       # -------------------------
       - name: Start Postgres
         run: |
-          cat <<EOF > docker-compose.override.yml
-          services:
-            postgres:
-              image: postgres:13
-              environment:
-                POSTGRES_USER: postgres
-                POSTGRES_PASSWORD: Ch3ckYP@5sW0rd
-                POSTGRES_DB: checkydb
-              ports:
-                - 5432:5432
-          EOF
-          docker compose up -d
+          docker compose up -d --build
+          sleep 30
 
       # -------------------------
       # Backend
