@@ -119,7 +119,7 @@ jobs:
         working-directory: backend
         run: |
           npm run start &
-          npx wait-on http://localhost:3001 --timeout 60000
+          npx wait-on http://localhost:3001 --timeout 120000
 
       - name: Run Selenium UI tests
         working-directory: selenium-tests
