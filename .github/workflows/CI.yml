@@ -1,0 +1,139 @@
+name: Checky CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # -------------------------
+  # Unit Tests
+  # -------------------------
+  unit-tests:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage/
+
+  # -------------------------
+  # Selenium UI Tests
+  # -------------------------
+  ui-tests:
+    name: Selenium UI Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # -------------------------
+      # Start Postgres via Docker Compose
+      # -------------------------
+      - name: Start Postgres
+        run: |
+          docker compose up -d --build
+          sleep 60
+
+      # -------------------------
+      # Debugging Docker Info
+      # -------------------------
+      - name: Debug Docker
+        run: |
+          echo "=== Docker version ==="
+          docker version
+          echo
+          echo "=== Docker info ==="
+          docker info
+          echo
+          echo "=== Running containers ==="
+          docker ps -a
+          echo
+          echo "=== Docker network inspect ==="
+          docker network ls
+          docker network inspect checky_default || echo "checky_default network not found"
+          echo
+          echo "=== Ports mapped ==="
+          docker port CheckyDB || echo "CheckyDB container not found"
+
+      # -------------------------
+      # Backend
+      # -------------------------
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+
+      - name: Start backend
+        working-directory: backend
+        run: |
+          export DB_HOST=db
+          export DB_USER=postgres
+          export DB_PASS=Ch3ckYP@5sW0rd
+          export DB_NAME=checkydb
+          export DB_PORT=5432
+          export PORT=3000
+          export JWT_SECRET=9b7d6c2a1f4e8b3c0a6d5f2e7c4b9a8d3e1f0c5a9b2e7d6f4c3a1e8b7d9f6c2
+          npm start &
+          sleep 20
+
+      # -------------------------
+      # Frontend
+      # -------------------------
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Start frontend
+        working-directory: frontend
+        run: |
+          export NEXT_PUBLIC_API_URL=http://localhost:3000
+          export HOST=0.0.0.0
+          export PORT=3001
+          npm run dev &
+          sleep 20
+
+      # -------------------------
+      # Selenium
+      # -------------------------
+      - name: Install Selenium dependencies
+        working-directory: selenium-tests
+        run: npm install
+
+      - name: Install Chrome & Chromedriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip libxi6 libnss3 libxss1 xvfb
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt --fix-broken install -y
+          npm install chromedriver --save-dev
+
+      - name: Run Selenium UI tests
+        working-directory: selenium-tests
+        run: npm test
+
+      # -------------------------
+      # Stop Postgres
+      # -------------------------
+      - name: Stop Postgres
+        if: always()
+        run: docker compose down

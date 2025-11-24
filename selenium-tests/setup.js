@@ -4,30 +4,33 @@ require('chromedriver');
 
 const getDriver = async () => {
     const options = new chrome.Options();
-    // options.addArguments('--headless'); // Uncomment for headless mode
-    options.addArguments('--window-size=1920,1080');
-    options.addArguments('--disable-blink-features=AutomationControlled');
-    
-    // Disable password save prompts and breach warnings
+
+    options.addArguments(
+        '--headless=new',
+        '--window-size=1920,1080',
+        '--no-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-gpu'
+    );
+
     options.setUserPreferences({
         'credentials_enable_service': false,
         'profile.password_manager_enabled': false,
         'profile.password_manager_leak_detection': false,
         'autofill.profile_enabled': false
     });
-    
-    // Add arguments to disable various prompts
+
     options.addArguments('--disable-features=PasswordLeakDetection');
     options.addArguments('--disable-save-password-bubble');
-    
+
     const driver = await new Builder()
         .forBrowser('chrome')
         .setChromeOptions(options)
         .build();
-    
-    // Set implicit wait for elements
+
     await driver.manage().setTimeouts({ implicit: 5000 });
-        
+
     return driver;
 };
 
