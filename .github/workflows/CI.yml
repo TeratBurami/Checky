@@ -91,9 +91,9 @@ jobs:
       - name: Start backend
         working-directory: backend
         run: |
-          nohup npm run start > backend.log 2>&1 &
-          echo "Waiting 20 seconds for backend to start..."
-          sleep 20
+          npm run start &
+          echo "Waiting 60 seconds for backend to start..."
+          sleep 60
 
       - name: Install frontend dependencies
         working-directory: frontend
@@ -102,9 +102,9 @@ jobs:
       - name: Start frontend
         working-directory: frontend
         run: |
-          nohup npm run dev -- --port 3001 > frontend.log 2>&1 &
-          npx wait-on http://localhost:3001 --timeout 60000
-
+          npm run dev -- --port 3001 &
+          echo "Waiting 60 seconds for frontend to start..."
+          sleep 60
 
       - name: Install Selenium dependencies
         working-directory: selenium-tests
@@ -126,3 +126,4 @@ jobs:
       - name: Tear down Docker Compose
         if: always()
         run: docker-compose down
+
