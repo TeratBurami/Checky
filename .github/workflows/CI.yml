@@ -8,7 +8,6 @@ jobs:
   unit-tests:
     name: Backend Unit Tests
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -71,33 +70,40 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup Chrome & ChromeDriver
-        uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: stable
-      - name: Setup ChromeDriver
-        uses: browser-actions/setup-chromedriver@v1
-        with:
-          chromedriver-version: stable
+      - name: Install Chrome dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y wget unzip libxi6 fonts-liberation libnss3 libxss1 xvfb
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt --fix-broken install -y
 
-      - name: Install selenium-test dependencies
-        working-directory: selenium-tests
-        run: npm install
+      - name: Install ChromeDriver
+        run: npm install chromedriver --save-dev
 
       - name: Create selenium-test .env
         working-directory: selenium-tests
         run: |
           echo "TEST_BASE_URL=http://localhost:3000" >> .env
 
+      - name: Install selenium dependencies
+        working-directory: selenium-tests
+        run: npm install
+
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm install
+
+      - name: Start frontend
+        working-directory: frontend
+        run: |
+          nohup npm run dev > frontend.log 2>&1 &
+          npx wait-on http://localhost:3000 --timeout 60000
 
       - name: Install backend dependencies
         working-directory: backend
         run: npm install
 
-      - name: Create backend .env
+      - name: Create backend .env (Postgres service)
         working-directory: backend
         run: |
           echo "DB_HOST=127.0.0.1" > .env
@@ -112,20 +118,11 @@ jobs:
         working-directory: backend
         run: |
           nohup npm run start > backend.log 2>&1 &
-          npx wait-on http://localhost:3001 --timeout 60000
-
-      - name: Start frontend
-        working-directory: frontend
-        run: |
-          nohup npm run dev > frontend.log 2>&1 &
-          npx wait-on http://localhost:3000 --timeout 60000
+          echo "Waiting for backend to start..."
+          sleep 30
 
       - name: Run Selenium UI tests
         working-directory: selenium-tests
-        env:
-          DISPLAY: :99
         run: |
-          # Start Xvfb for headless GUI support
-          Xvfb :99 -screen 0 1920x1080x24 &
-          echo "Running UI tests (Chrome headless)..."
+          echo "Running UI tests (Chrome with GUI)..."
           npm test
