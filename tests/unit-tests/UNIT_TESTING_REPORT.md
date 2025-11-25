@@ -47,11 +47,6 @@ Each test suite contains multiple test cases using various testing techniques (I
 **Testing Techniques Applied:**
 - **Branch Coverage** — ensures all authorization paths (missing token, invalid token, insufficient role, valid access) are executed.
 
-**Coverage Metrics:**
-- ✅ **Statement Coverage: 100%** (10/10 lines)
-- ✅ **Branch Coverage: 100%** (9/9 branches)
-- ✅ **Function Coverage: 100%** (2/2 functions)
-
 ---
 
 ## Test Suite 2: Get User by ID
@@ -70,11 +65,6 @@ Each test suite contains multiple test cases using various testing techniques (I
 **Testing Techniques Applied:**
 - **Input Space Partitioning (ISP)** — partitions user ID inputs into valid, non-existent, and error categories.
 
-**Coverage Metrics:**
-- ✅ **Statement Coverage: 100%** (10/10 lines)
-- ✅ **Branch Coverage: 100%** (all branches covered)
-- ✅ **Function Coverage: 100%** (1/1 function)
-
 ---
 
 ## Test Suite 3: Get Notifications for User
@@ -92,18 +82,5 @@ Each test suite contains multiple test cases using various testing techniques (I
 **Testing Techniques Applied:**
 - **Logic Coverage** — ensures correctness of query logic filtering notifications **per user**.
 
-**Coverage Metrics:**
-- ✅ **Statement Coverage: 100%** (23/23 lines)
-- ✅ **Branch Coverage: 100%** (all branches covered)
-- ✅ **Function Coverage: 100%** (1/1 function)
-
 ---
-
-### Individual Method Coverage
-
-| Method/Feature | File | Statement Coverage | Branch Coverage | Status |
-|----------------|------|-------------------|-----------------|--------|
-| **authenticateJWT()** | middleware/auth.js | **100%** (10/10 lines) | **100%** (9/9 branches) | ✅ **EXCEEDS 70%** |
-| **GET /auth/:id** | routes/apis/user.js | **100%** (10/10 lines) | **100%** (all branches) | ✅ **EXCEEDS 70%** |
-| **GET /notifications/** | routes/apis/notification.js | **100%** (23/23 lines) | **100%** (all branches) | ✅ **EXCEEDS 70%** |
 
