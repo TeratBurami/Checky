@@ -11,14 +11,11 @@ This report documents the unit testing implementation for the Checky backend app
 ---
 
 ### Overall Test Results
-![image](../images/image.png)
+![image](../images/image1.png)
+![image](../images/image2.png)
 - **Total Test Suites:** 11/11 passed
 - **Total Test Cases:** 92/92 passed
 - **Success Rate:** 100%
-- **Overall Statement Coverage:** 79.64% ✅
-- **Overall Branch Coverage:** 59.66% ⚠️
-- **Overall Function Coverage:** 92.98% ✅
-- **Overall Line Coverage:** 80.59% ✅
 
 ---
 
