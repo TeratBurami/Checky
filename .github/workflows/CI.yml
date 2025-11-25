@@ -1,0 +1,30 @@
+name: Checky CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # -------------------------
+  # Unit Tests CI
+  # -------------------------
+  unit-tests:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+        # checkout to repo
+      - uses: actions/checkout@v4
+        # install node
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+        # do npm install for backend
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+        # run test :)
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test
+
