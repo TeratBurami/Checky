@@ -1,4 +1,4 @@
-# Checky System Test Suite Documentation
+# Checky UI Test Suite Documentation
 
 ## Overview
 
