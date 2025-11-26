@@ -1,0 +1,130 @@
+
+
+  System Test Suite 1: Teacher Class Management Workflow
+Waiting 3 seconds for any password warnings to be dismissed...
+[Action] Navigated to Create Class page
+[Action] Entered class name: Introduction to English
+[Action] Entered class description
+[Action] Clicked Submit button
+[Action] Verified class creation in list: Introduction to English
+[Action] Navigated to class detail page
+[Action] Captured Class ID: 34, Code: INTAT4C8
+    ✔ Test Case 1.1: Create a New Class (981ms)
+[Action] Navigated to Members page
+[Action] Entered student email: reze@gmail.com
+[Action] Clicked Invite button
+[Action] Verified invited student in list: reze@gmail.com
+    ✔ Test Case 1.2: Create an Invite for a Student (3611ms)
+[Action] Navigated to Class List
+[Action] Clicked on class card
+[Action] Clicked Edit Class button
+[Action] Updated class name to: Introduction to English – Section A
+[Action] Updated class description
+[Action] Clicked Confirm Edit button
+[Action] Verified updated class name in UI
+    ✔ Test Case 1.3: Edit an Existing Class (1193ms)
+[Action] Navigated to Class List
+[Action] Clicked on class card
+[Action] Clicked Edit Class button
+[Action] Clicked Delete Class button
+[Action] Clicked Confirm Delete button in modal
+[Action] Verified class deletion from list: Introduction to English – Section A
+    ✔ Test Case 1.4: Delete an Existing Class (9608ms)
+[Action] Clicked User Menu
+[Action] Clicked Logout button
+[Action] Verified redirect to login page
+    ✔ Test Case 1.5: Logout (1459ms)
+
+  System Test Suite 2: Teacher Assignment Management Workflow
+Waiting 3 seconds for any password warnings to be dismissed...
+[Action] Logged in as teacher
+[Action] Verified teacher dashboard elements
+✓ Teacher login successful
+    ✔ Test Case 2.1: Teacher Login (1647ms)
+[Action] Navigated to Create Rubric page
+[Action] Entered rubric name: Essay Evaluation Rubric
+[Action] Entered Criterion 1 title: Content Quality
+[Action] Filled in levels for Criterion 1
+[Action] Clicked Add Criterion button
+[Action] Entered Criterion 2 title: Grammar and Mechanics
+[Action] Filled in levels for Criterion 2
+[Action] Clicked Save Rubric button
+[Action] Verified rubric creation in list: Essay Evaluation Rubric
+✓ Created rubric: Essay Evaluation Rubric
+    ✔ Test Case 2.2: Create a New Rubric (5950ms)
+[Action] Navigated to Class List
+[Action] Navigated to class detail page
+[Action] Navigated to Create Assignment page
+[Action] Entered assignment title: Historical Sources Analysis
+[Action] Entered assignment description
+[Action] Set deadline to: 12/03/2025 11:59 PM
+[Action] Selected rubric: Essay Evaluation Rubric
+[Action] Clicked Create Assignment button
+[Action] Verified assignment creation in list: Historical Sources Analysis
+✓ Created assignment: Historical Sources Analysis
+[Action] Saved assignment data to assignment_data.json
+    ✔ Test Case 2.3: Create Assignment with Rubric (9727ms)
+[Action] Navigated to class detail page
+[Action] Clicked on assignment card
+[Action] Navigated to Edit Assignment page
+[Action] Updated assignment title to: Historical Sources Analysis - Updated
+[Action] Updated assignment description
+[Action] Clicked Update Assignment button
+[Action] Verified assignment title update
+✓ Assignment title updated successfully: Historical Sources Analysis - Updated
+[Action] Verified assignment description update
+[Action] Updated assignment_data.json with new title: Historical Sources Analysis - Updated
+    ✔ Test Case 2.4: Edit Assignment Details (5845ms)
+[Action] Clicked User Menu
+[Action] Clicked Logout button
+[Action] Verified redirect to login page
+✓ Logout successful
+    ✔ Test Case 2.5: Logout (1457ms)
+
+  System Test Suite 3: Student Assignment Submission Workflow
+[Setup] Loaded shared test data: Class="Historical Investigation Fundamentals", Assignment="Historical Sources Analysis - Updated"
+Waiting 3 seconds for any password warnings to be dismissed...
+[Action] Student logged in successfully
+    ✔ Test Case 3.1: Student Login (1656ms)
+[Action] Navigating to class: Historical Investigation Fundamentals
+[Action] Class detail page loaded
+    ✔ Test Case 3.2: Navigate to Class (404ms)
+[Action] Looking for assignment: Historical Sources Analysis - Updated
+[Action] Viewing assignment details for: Historical Sources Analysis - Updated
+    ✔ Test Case 3.3: View Assignment Details (241ms)
+[Action] Entered text submission
+[Action] Clicked Submit button
+[Action] Text submission verified
+    ✔ Test Case 3.4: Submit Assignment with Text Content (3729ms)
+[Action] Clicked Edit Submission
+[Action] Uploaded file: test_essay.pdf
+[Action] Clicked Update Submission
+[Action] Submission update verified
+    ✔ Test Case 3.5: Edit Submission and Add Files (4329ms)
+[Action] Verified status: Pending Grade
+[Action] Submission confirmation persisted after refresh
+    ✔ Test Case 3.6: View Submission Confirmation (2201ms)
+[Action] Logout successful
+    ✔ Test Case 3.7: Logout (1463ms)
+
+  System Test Suite 4: Teacher Grading Workflow
+[Setup] Loaded shared test data: Class="Historical Investigation Fundamentals", Assignment="Historical Sources Analysis - Updated"
+Waiting 3 seconds for any password warnings to be dismissed...
+[Action] Teacher logged in successfully
+[Action] Navigated to class: Historical Investigation Fundamentals
+[Action] Viewing assignment: Historical Sources Analysis - Updated
+[Action] Verified submission list with 1 submissions
+    ✔ Test Case 4.1: View Student Submissions (439ms)
+[Action] Clicked Auto-Grade All button
+[Action] Accepted browser alert
+[Action] Auto-grade process completed (or attempted)
+    ✔ Test Case 4.3: Use Auto-Grade Feature (3090ms)
+[Action] Clicked View/Grade button
+[Action] Entered score and comment
+[Action] Clicked Submit Grade
+[Action] Verified grade saved successfully
+    ✔ Test Case 4.2: Grade Student Submission Manually (3893ms)
+
+
+  20 passing (1m)
+
