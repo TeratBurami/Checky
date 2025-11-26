@@ -5,8 +5,6 @@ This report documents the unit testing implementation for the Checky backend app
 - **Project Name:** Checky - Backend API
 - **Testing Framework:** Jest
 - **Test Runner:** Jest with Babel transformation
-- **Mocking Library:** Jest built-in mocking
-- **HTTP Testing:** Supertest v7.1.4
 
 ---
 
@@ -31,8 +29,8 @@ Each test suite contains multiple test cases using various testing techniques (I
 ---
 
 ## Test Suite 1: Authentication Middleware
-**Method Under Test:** `authenticateJWT(allowedRoles = [])`
-**File Location:** `middleware/auth.js` (lines 3-19)
+**Method Under Test:** `authenticateJWT(...)`\
+**File Location:** `middleware/auth.js`\
 **Purpose:** JWT authentication middleware that validates tokens and enforces role-based access control
 
 ### Test Cases
@@ -50,8 +48,8 @@ Each test suite contains multiple test cases using various testing techniques (I
 ---
 
 ## Test Suite 2: Get User by ID
-**Endpoint:** `GET /api/v1/auth/:id`
-**File Location:** `routes/apis/user.js` (lines 96-105)
+**Endpoint:** `GET /api/v1/auth/:id`\
+**File Location:** `routes/apis/user.js`\
 **Purpose:** Retrieves a specific user's information from the database by their user ID
 
 ### Test Cases
@@ -68,8 +66,8 @@ Each test suite contains multiple test cases using various testing techniques (I
 ---
 
 ## Test Suite 3: Get Notifications for User
-**Endpoint:** `GET /api/notifications/`
-**File Location:** `routes/apis/notification.js` (lines 32-54)
+**Endpoint:** `GET /api/notifications/`\
+**File Location:** `routes/apis/notification.js`\
 **Purpose:** Retrieves all notifications for the authenticated user, ordered by creation date
 
 ### Test Cases
@@ -80,7 +78,7 @@ Each test suite contains multiple test cases using various testing techniques (I
 | `testGetNotifications_DatabaseError` | **Error**: Database failure | Authenticated request | `db.query()` throws error | **500 Internal Server Error**<br>Error: "DB error" |
 
 **Testing Techniques Applied:**
-- **Logic Coverage** — ensures correctness of query logic filtering notifications **per user**.
+- **Logic Coverage** — ensures correctness of query logic filtering notifications for a user.
 
 ---
 
