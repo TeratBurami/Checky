@@ -7,7 +7,7 @@ Welcome to the Checky project\! Follow these steps to get the application up and
 
 -----
 
-## Projec Structure
+## Project Structure
 
 ```
 Checky
